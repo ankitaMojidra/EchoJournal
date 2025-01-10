@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">EchoJournal</string>
+    <string name="your_echo_general">Your EchoJournal</string>
+    <string name="no_entries">No Entries</string>
+    <string name="start_recording">Start recording your first Echo</string>
+    <string name="all_moods">All Moods</string>
+    <string name="all_topics">All Topics</string>
+    <string name="my_entry">My Entry</string>
+    <string name="add_title">Add Title</string>
+    <string name="recording_your_memories">Recording your memories&#8230;</string>
+    <string name="recording_paused">Recording Paused</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="confirm">Confirm</string>
+    <string name="how_are_you_doing">How are you doing?</string>
+    <string name="stressed">Stressed</string>
+    <string name="sad">Sad</string>
+    <string name="neatral">Neutral</string>
+    <string name="peaceful">Peaceful</string>
+    <string name="exited">Excited</string>
+    <string name="new_entry">New Entry</string>
+    <string name="topic">Topic</string>
+    <string name="add_description">Add Description</string>
+</resources>
