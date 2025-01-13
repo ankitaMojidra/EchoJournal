@@ -82,8 +82,8 @@ fun NewEntryComponent(modifier: Modifier) {
             Spacer(modifier.width(10.dp))
 
             Slider(
-                value = sliderPosition.value,
-                onValueChange = { sliderPosition.value = it },
+                value = sliderPosition.floatValue,
+                onValueChange = { sliderPosition.floatValue = it },
                 modifier = Modifier.weight(1f),
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
