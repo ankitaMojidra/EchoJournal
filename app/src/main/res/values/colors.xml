@@ -13,4 +13,5 @@
     <color name="confirm_color">#578CFF</color>
     <color name="cancel_backgroud">#EEF0FF</color>
     <color name="add_title_color">#C1C3CE</color>
+    <color name="add_icon_plus">#9FABCD</color>
 </resources>
