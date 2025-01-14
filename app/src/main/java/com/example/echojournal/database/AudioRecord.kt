@@ -9,5 +9,8 @@ data class AudioRecord(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     @ColumnInfo(name = "title") val title: String,
     @ColumnInfo(name = "timestamp") val timestamp: Long,
-    @ColumnInfo(name = "audio_data") val audioData: ByteArray
+    @ColumnInfo(name = "audio_data") val audioData: ByteArray,
+    @ColumnInfo(name = "topic") val topic: String,
+    @ColumnInfo(name = "description") val description: String,
+    @ColumnInfo(name = "mood") val mood: String
 )

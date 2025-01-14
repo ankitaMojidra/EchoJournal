@@ -14,4 +14,5 @@
     <color name="cancel_backgroud">#EEF0FF</color>
     <color name="add_title_color">#C1C3CE</color>
     <color name="add_icon_plus">#9FABCD</color>
+    <color name="save_color">#E1E2EC</color>
 </resources>

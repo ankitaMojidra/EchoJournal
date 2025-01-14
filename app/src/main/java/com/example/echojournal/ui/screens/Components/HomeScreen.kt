@@ -2,6 +2,7 @@ package com.example.echojournal.ui.screens.Components
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaRecorder
 import android.os.Build
@@ -18,6 +19,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -49,11 +52,17 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.echojournal.R
+import com.example.echojournal.database.AudioRecord
+import com.example.echojournal.database.AudioRecordDao
 import com.example.echojournal.database.AudioRecordDatabase
+import com.example.echojournal.ui.screens.NewRecordingActivity
 import com.example.echojournal.ui.theme.EchoJournalTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
+import java.io.FileInputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -113,14 +122,17 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
 
             while (isRecording && !isPaused) {
                 val currentTime = System.currentTimeMillis()
-                val elapsedTimeMillis = currentTime - startTimeMillis.longValue - totalPausedTime.longValue
+                val elapsedTimeMillis =
+                    currentTime - startTimeMillis.longValue - totalPausedTime.longValue
 
                 recordingTime = String.format(
                     Locale.getDefault(),
                     "%02d:%02d:%02d",
                     TimeUnit.MILLISECONDS.toHours(elapsedTimeMillis),
                     TimeUnit.MILLISECONDS.toMinutes(elapsedTimeMillis) % TimeUnit.HOURS.toMinutes(1),
-                    TimeUnit.MILLISECONDS.toSeconds(elapsedTimeMillis) % TimeUnit.MINUTES.toSeconds(1)
+                    TimeUnit.MILLISECONDS.toSeconds(elapsedTimeMillis) % TimeUnit.MINUTES.toSeconds(
+                        1
+                    )
                 )
                 delay(100L)
             }
@@ -142,32 +154,38 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
     Column {
         Text(text = context.getString(R.string.your_echo_general))
 
-        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center)
-        {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
-                Image(painter = painterResource(R.drawable.icon), contentDescription = null)
-
-                Text(text = context.getString(R.string.no_entries))
-                Text(text = context.getString(R.string.start_recording))
+        if (audioRecords.value.isNotEmpty()) {
+            LazyColumn {
+                items(audioRecords.value) { record ->
+                    AudioRecordItem(record = record, onPlay = { })
+                }
             }
+        } else {
+            Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center)
+            {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Image(painter = painterResource(R.drawable.icon), contentDescription = null)
+                    Text(text = context.getString(R.string.no_entries))
+                    Text(text = context.getString(R.string.start_recording))
+                }
 
-            FloatingActionButton(
-                onClick = {
-                    coroutineScope.launch {
-                        startRecordingEcho() // Start recording when FAB is clicked
-                        showBottomSheet = true
-                        isRecordingVisible = false
-                    }
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(10.dp),
-                shape = CircleShape,
-                containerColor = fabColor,
-                contentColor = Color.White
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Echo")
+                FloatingActionButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            startRecordingEcho() // Start recording when FAB is clicked
+                            showBottomSheet = true
+                            isRecordingVisible = false
+                        }
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(10.dp),
+                    shape = CircleShape,
+                    containerColor = fabColor,
+                    contentColor = Color.White
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add Echo")
+                }
             }
         }
     }
@@ -214,18 +232,14 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                         modifier = Modifier
                             .size(50.dp)
                             .clickable {
-                                stopRecording(mediaRecorder) {
+                                stopRecordingAndSave(context, mediaRecorder, audioRecordDao) {
                                     isRecording = it
                                     isPaused = false
                                     mediaRecorder = null
                                     startTimeMillis.longValue = 0L
                                     pausedTimeMillis.longValue = 0L
                                     totalPausedTime.longValue = 0L
-                                    Toast.makeText(
-                                        context,
-                                        "Recording saved to ${outputFile.absolutePath}",
-                                        Toast.LENGTH_LONG
-                                    ).show()
+                                    showBottomSheet = false
                                 }
                             }
                     )
@@ -242,8 +256,7 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                                 isRecordingVisible = true
                             }
                     )
-                }else
-                {
+                } else {
                     Image(painter = painterResource(R.drawable.icon_record),
                         contentDescription = "audio_start",
                         modifier = Modifier
@@ -266,7 +279,15 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                         modifier = Modifier
                             .size(50.dp)
                             .clickable {
-                                showBottomSheet = false
+                                stopRecordingAndSave(context, mediaRecorder, audioRecordDao) {
+                                    isRecording = it
+                                    isPaused = false
+                                    mediaRecorder = null
+                                    startTimeMillis.longValue = 0L
+                                    pausedTimeMillis.longValue = 0L
+                                    totalPausedTime.longValue = 0L
+                                    showBottomSheet = false
+                                }
                             })
                 }
             }
@@ -274,9 +295,8 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
     }
 }
 
-
 private fun pauseRecording(mediaRecorder: MediaRecorder?) {
-        mediaRecorder?.pause()
+    mediaRecorder?.pause()
 }
 
 private fun resumeRecording(
@@ -285,32 +305,59 @@ private fun resumeRecording(
     currentRecorder: MediaRecorder?,
     onRecorderCreated: (MediaRecorder?) -> Unit
 ) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        try {
-            currentRecorder?.resume()
-        } catch (e: IllegalStateException) {
-            // If resume fails, start a new recording
-            onRecorderCreated(startRecording(context, outputFile) { })
-        }
-    } else {
-        // For API < 24, we need to start a new recording
+    try {
+        currentRecorder?.resume()
+    } catch (e: IllegalStateException) {
+        // If resume fails, start a new recording
         onRecorderCreated(startRecording(context, outputFile) { })
     }
 }
 
-private fun stopRecording(
+private fun stopRecordingAndSave(
+    context: Context,
     mediaRecorder: MediaRecorder?,
+    audioRecordDao: AudioRecordDao,
     onRecordingStateChange: (Boolean) -> Unit
 ) {
     mediaRecorder?.apply {
         try {
             stop()
-            release()
-            onRecordingStateChange(false)
-        } catch (e: Exception) {
-            onRecordingStateChange(false)
+            val recordingFile = File(context.cacheDir, "temp_recording.mp3")
+            setOutputFile(recordingFile.absolutePath) // Set output to a temp file
+
+            // Need to reconfigure the MediaRecorder to extract data. It's better to store to a temp file then read.
+            val inputStream = FileInputStream(recordingFile)
+            val audioBytes = inputStream.readBytes()
+            inputStream.close()
+            recordingFile.delete() // Delete the temp file
+
+            val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            val timestamp = System.currentTimeMillis()
+            val formattedDate = sdf.format(Date(timestamp))
+
+            CoroutineScope(Dispatchers.IO).launch {
+                val insertedId = audioRecordDao.insert(
+                    AudioRecord(
+                        title = "Recording at $formattedDate",
+                        timestamp = timestamp,
+                        audioData = audioBytes,
+                        topic = "",
+                        description = "",
+                        mood = ""
+                    )
+                )
+                release()
+                onRecordingStateChange(false)
+                val intent = Intent(context, NewRecordingActivity::class.java).apply {
+                    putExtra("audioRecordId", insertedId) // Pass the ID as an extra
+            }
+            context.startActivity(intent)
         }
+    } catch (e: Exception) {
+        Toast.makeText(context, "Error saving recording", Toast.LENGTH_SHORT).show()
+        onRecordingStateChange(false)
     }
+}
 }
 
 private fun startRecording(
@@ -324,21 +371,27 @@ private fun startRecording(
         @Suppress("DEPRECATION")
         MediaRecorder()
     }
-    mediaRecorder.apply {
-        setAudioSource(MediaRecorder.AudioSource.MIC)
-        setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-        setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-        setOutputFile(outputFile.absolutePath)
-        try {
+    try {
+        mediaRecorder.apply {
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            setOutputFile(
+                File(
+                    context.cacheDir,
+                    "temp_recording.mp3"
+                ).absolutePath
+            ) // Temporary file
+
             prepare()
             start()
             onRecordingStateChange(true)
             return this
-        } catch (e: IOException) {
-            Toast.makeText(context, "Error starting recording", Toast.LENGTH_SHORT).show()
-            onRecordingStateChange(false)
-            return null
         }
+    } catch (e: IOException) {
+        Toast.makeText(context, "Error starting recording", Toast.LENGTH_SHORT).show()
+        onRecordingStateChange(false)
+        return null
     }
 }
 

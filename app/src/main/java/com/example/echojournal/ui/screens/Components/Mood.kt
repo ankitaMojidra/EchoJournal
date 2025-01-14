@@ -40,7 +40,7 @@ import com.example.echojournal.R
 import com.example.echojournal.ui.theme.EchoJournalTheme
 
 @Composable
-fun Mood(modifier: Modifier, navController: NavController) {
+fun Mood(modifier: Modifier) {
 
     val context = LocalContext.current
     var isVisible by remember { mutableStateOf(false) }
@@ -154,7 +154,6 @@ fun Mood(modifier: Modifier, navController: NavController) {
             }
         }
     }
-
 }
 
 
@@ -162,6 +161,6 @@ fun Mood(modifier: Modifier, navController: NavController) {
 @Composable
 fun MoodPreview() {
     EchoJournalTheme {
-        Mood(modifier = Modifier, navController = rememberNavController())
+        Mood(modifier = Modifier)
     }
 }
