@@ -26,7 +26,6 @@ fun Mood(modifier: Modifier, onCloseBottomSheet: () -> Unit) {
 
     val context = LocalContext.current
     var selecedMood by remember { mutableStateOf<String?>(null) }
-    var isConfirmVisible by remember { mutableStateOf(false) }
 
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = context.getString(R.string.how_are_you_doing))
