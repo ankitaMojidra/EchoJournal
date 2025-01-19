@@ -15,4 +15,7 @@
     <color name="add_title_color">#C1C3CE</color>
     <color name="add_icon_plus">#9FABCD</color>
     <color name="save_color">#E1E2EC</color>
+    <color name="ripple_first">#EEF0FF</color>
+    <color name="ripple_second">#D9E2FF</color>
+    <color name="save_text">#6C7084</color>
 </resources>

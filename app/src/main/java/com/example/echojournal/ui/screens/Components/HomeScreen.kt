@@ -9,6 +9,8 @@ import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +43,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -56,6 +59,7 @@ import com.example.echojournal.database.AudioRecord
 import com.example.echojournal.database.AudioRecordDao
 import com.example.echojournal.database.AudioRecordDatabase
 import com.example.echojournal.ui.screens.NewRecordingActivity
+import com.example.echojournal.ui.screens.NewRecordingComponents.AudioRecordItem
 import com.example.echojournal.ui.theme.EchoJournalTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -154,6 +158,27 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
     Column {
         Text(text = context.getString(R.string.your_echo_general))
 
+        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center)
+        {
+            FloatingActionButton(
+                onClick = {
+                    coroutineScope.launch {
+                        startRecordingEcho() // Start recording when FAB is clicked
+                        showBottomSheet = true
+                        isRecordingVisible = false
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(10.dp),
+                shape = CircleShape,
+                containerColor = fabColor,
+                contentColor = Color.White
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Echo")
+            }
+        }
+
         if (audioRecords.value.isNotEmpty()) {
             LazyColumn {
                 items(audioRecords.value) { record ->
@@ -161,33 +186,13 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                 }
             }
         } else {
-            Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center)
-            {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(painter = painterResource(R.drawable.icon), contentDescription = null)
-                    Text(text = context.getString(R.string.no_entries))
-                    Text(text = context.getString(R.string.start_recording))
-                }
-
-                FloatingActionButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            startRecordingEcho() // Start recording when FAB is clicked
-                            showBottomSheet = true
-                            isRecordingVisible = false
-                        }
-                    },
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(10.dp),
-                    shape = CircleShape,
-                    containerColor = fabColor,
-                    contentColor = Color.White
-                ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add Echo")
-                }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Image(painter = painterResource(R.drawable.icon), contentDescription = null)
+                Text(text = context.getString(R.string.no_entries))
+                Text(text = context.getString(R.string.start_recording))
             }
         }
+
     }
 
     if (showBottomSheet) {
@@ -209,12 +214,11 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
 
             Row(
                 modifier = Modifier
-                    .padding(top = 15.dp)
+                    .padding(top = 45.dp, bottom = 30.dp)
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
-
-                ) {
+            ) {
                 Image(
                     painter = painterResource(R.drawable.icon_close),
                     contentDescription = null,
@@ -222,18 +226,76 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                         .size(50.dp)
                         .clickable {
                             showBottomSheet = false
+                            isRecording = false
+                            isPaused = false
+                            recordingTime = "00:00:00"
+                            startTimeMillis.longValue = 0L
+                            pausedTimeMillis.longValue = 0L
+                            totalPausedTime.longValue = 0L
+                            mediaRecorder?.stop()
+                            mediaRecorder?.release()
+                            mediaRecorder = null
                         }
                 )
 
                 if (!isRecordingVisible) {
+                    val rippleColor1 = colorResource(R.color.ripple_first)
+                    val rippleColor2 = colorResource(R.color.ripple_second)
+                    val rippleRadius1 = remember { Animatable(0f) }
+                    val rippleRadius2 = remember { Animatable(0f) }
+
+                    LaunchedEffect(showBottomSheet, isRecording) {
+                        if (showBottomSheet && isRecording) {
+                            while (true) {
+                                launch {
+                                    rippleRadius1.animateTo(
+                                        targetValue = 50f,
+                                        animationSpec = tween(durationMillis = 600)
+                                    )
+                                    rippleRadius1.snapTo(0f)
+                                }
+                                launch {
+                                    delay(200) // Offset for the second ripple
+                                    rippleRadius2.animateTo(
+                                        targetValue = 40f,
+                                        animationSpec = tween(durationMillis = 600)
+                                    )
+                                    rippleRadius2.snapTo(0f)
+                                }
+                                delay(600)
+                            }
+                        } else {
+                            rippleRadius1.snapTo(0f)
+                            rippleRadius2.snapTo(0f)
+                        }
+                    }
+
                     Image(
                         painter = painterResource(R.drawable.icon_true_blue),
                         contentDescription = null,
                         modifier = Modifier
                             .size(50.dp)
+                            .drawBehind {
+                                if (isRecording) {
+                                    drawCircle(
+                                        color = rippleColor1,
+                                        radius = rippleRadius1.value.dp.toPx(),
+                                        center = center,
+                                    )
+                                    drawCircle(
+                                        color = rippleColor2,
+                                        radius = rippleRadius2.value.dp.toPx(),
+                                        center = center,
+                                    )
+                                }
+                            }
                             .clickable {
-                                stopRecordingAndSave(context, mediaRecorder, audioRecordDao) {
-                                    isRecording = it
+                                stopRecordingAndSave(
+                                    context,
+                                    mediaRecorder,
+                                    audioRecordDao
+                                ) { success ->
+                                    isRecording = success
                                     isPaused = false
                                     mediaRecorder = null
                                     startTimeMillis.longValue = 0L
@@ -350,14 +412,14 @@ private fun stopRecordingAndSave(
                 onRecordingStateChange(false)
                 val intent = Intent(context, NewRecordingActivity::class.java).apply {
                     putExtra("audioRecordId", insertedId) // Pass the ID as an extra
+                }
+                context.startActivity(intent)
             }
-            context.startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Error saving recording", Toast.LENGTH_SHORT).show()
+            onRecordingStateChange(false)
         }
-    } catch (e: Exception) {
-        Toast.makeText(context, "Error saving recording", Toast.LENGTH_SHORT).show()
-        onRecordingStateChange(false)
     }
-}
 }
 
 private fun startRecording(
