@@ -19,7 +19,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.compose.rememberNavController
 import com.example.echojournal.R
-import com.example.echojournal.ui.screens.NewRecordingComponents.NewEntryComponent
+import com.example.echojournal.ui.screens.Components.NewRecordingComponents.NewEntryComponent
 import com.example.echojournal.ui.theme.EchoJournalTheme
 
 class NewRecordingActivity : ComponentActivity() {
