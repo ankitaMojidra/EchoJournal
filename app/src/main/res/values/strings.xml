@@ -6,7 +6,7 @@
     <string name="all_moods">All Moods</string>
     <string name="all_topics">All Topics</string>
     <string name="my_entry">My Entry</string>
-    <string name="add_title">Add Title</string>
+    <string name="add_title">Add Title&#8230;</string>
     <string name="recording_your_memories">Recording your memories&#8230;</string>
     <string name="recording_paused">Recording Paused</string>
     <string name="cancel">Cancel</string>
@@ -20,5 +20,5 @@
     <string name="exited">Excited</string>
     <string name="new_entry">New Entry</string>
     <string name="topic">Topic</string>
-    <string name="add_description">Add Description</string>
+    <string name="add_description">Add Description&#8230;</string>
 </resources>

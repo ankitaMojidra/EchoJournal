@@ -1,4 +1,4 @@
-package com.example.echojournal.ui.screens.Components
+package com.example.echojournal.ui.screens.Components.HomeScreenComponents
 
 import android.Manifest
 import android.content.Context
@@ -6,30 +6,38 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaRecorder
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -59,7 +67,6 @@ import com.example.echojournal.database.AudioRecord
 import com.example.echojournal.database.AudioRecordDao
 import com.example.echojournal.database.AudioRecordDatabase
 import com.example.echojournal.ui.screens.NewRecordingActivity
-import com.example.echojournal.ui.screens.NewRecordingComponents.AudioRecordItem
 import com.example.echojournal.ui.theme.EchoJournalTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -141,6 +148,8 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                 delay(100L)
             }
         }
+
+        Log.d("HomeScreen", "Audio Record Size: ${audioRecords.value.size}")
     }
 
     fun startRecordingEcho() {
@@ -156,43 +165,81 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
     }
 
     Column {
-        Text(text = context.getString(R.string.your_echo_general))
-
-        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center)
-        {
-            FloatingActionButton(
-                onClick = {
-                    coroutineScope.launch {
-                        startRecordingEcho() // Start recording when FAB is clicked
-                        showBottomSheet = true
-                        isRecordingVisible = false
-                    }
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(10.dp),
-                shape = CircleShape,
-                containerColor = fabColor,
-                contentColor = Color.White
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Echo")
-            }
-        }
+        Text(
+            text = context.getString(R.string.your_echo_general),
+            modifier.padding(top = 30.dp, start = 10.dp)
+        )
 
         if (audioRecords.value.isNotEmpty()) {
-            LazyColumn {
-                items(audioRecords.value) { record ->
-                    AudioRecordItem(record = record, onPlay = { })
+            Column {
+                Row(modifier = Modifier.padding(start = 10.dp)) {
+
+                    OutlinedButton(
+                        onClick = {},
+                        shape = RoundedCornerShape(20.dp),
+                        border = BorderStroke(1.dp, colorResource(R.color.add_title_color)),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = colorResource(R.color.all_mood))
+                    )
+                    {
+                        Text(context.getString(R.string.all_moods))
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    OutlinedButton(
+                        onClick = {},
+                        shape = RoundedCornerShape(20.dp),
+                        border = BorderStroke(1.dp, colorResource(R.color.add_title_color)),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = colorResource(R.color.all_mood))
+                    ) {
+                        Text(context.getString(R.string.all_topics))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                LazyColumn {
+                    Log.d("HomeScreen", "Display Lazy column")
+
+                    items(audioRecords.value) { record ->
+                        RecordHistoryItem(record = record, onPlay = { })
+                    }
                 }
             }
         } else {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Log.d("HomeScreen", "Display empty screen")
+
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
                 Image(painter = painterResource(R.drawable.icon), contentDescription = null)
                 Text(text = context.getString(R.string.no_entries))
                 Text(text = context.getString(R.string.start_recording))
             }
         }
+    }
 
+    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center)
+    {
+        FloatingActionButton(
+            onClick = {
+                coroutineScope.launch {
+                    startRecordingEcho() // Start recording when FAB is clicked
+                    showBottomSheet = true
+                    isRecordingVisible = false
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(10.dp),
+            shape = CircleShape,
+            containerColor = fabColor,
+            contentColor = Color.White
+        ) {
+            Icon(imageVector = Icons.Default.Add, contentDescription = "Add Echo")
+        }
     }
 
     if (showBottomSheet) {

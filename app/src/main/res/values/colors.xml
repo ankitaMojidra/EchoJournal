@@ -18,4 +18,6 @@
     <color name="ripple_first">#EEF0FF</color>
     <color name="ripple_second">#D9E2FF</color>
     <color name="save_text">#6C7084</color>
+    <color name="all_mood">#3B4663</color>
+    <color name="audio_time">#40434F</color>
 </resources>

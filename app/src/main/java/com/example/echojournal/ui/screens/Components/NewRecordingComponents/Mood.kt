@@ -1,4 +1,4 @@
-package com.example.echojournal.ui.screens.NewRecordingComponents
+package com.example.echojournal.ui.screens.Components.NewRecordingComponents
 
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
@@ -39,7 +39,6 @@ fun Mood(modifier: Modifier, onCloseBottomSheet: () -> Unit) {
                 textRes = R.string.stressed,
                 isSelected = selecedMood == "stressed",
                 onMoodSelected = { selecedMood = "stressed" })
-
 
             MoodItem(imageResGray = R.drawable.sad_gray,
                 imageResColor = R.drawable.mood_sad,
