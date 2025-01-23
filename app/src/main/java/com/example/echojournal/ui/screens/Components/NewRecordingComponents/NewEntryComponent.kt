@@ -1,7 +1,6 @@
 package com.example.echojournal.ui.screens.Components.NewRecordingComponents
 
 import android.annotation.SuppressLint
-import android.widget.TextView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +25,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -46,7 +44,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import com.example.echojournal.R
 import com.example.echojournal.database.AudioRecord
 import com.example.echojournal.database.AudioRecordDatabase
@@ -176,7 +173,8 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
                 color = colorResource(R.color.add_title_color),
                 style = TextStyle(fontSize = 18.sp),
                 modifier = Modifier.clickable {
-                    showHashtagSelector = true }
+                    showHashtagSelector = true
+                }
             )
 
             /* TextField(

@@ -35,7 +35,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.PopupProperties
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -101,11 +100,14 @@ fun HashtagSelector(
             ExposedDropdownMenu(
                 expanded = isExpanded && (searchText.isNotEmpty() || filteredTags.isNotEmpty()),
                 onDismissRequest = { isExpanded = false },
-                modifier = Modifier.exposedDropdownSize().
-                background(color = Color.White,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                    .shadow(elevation = 4.dp,
+                modifier = Modifier
+                    .exposedDropdownSize()
+                    .background(
+                        color = Color.White,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .shadow(
+                        elevation = 4.dp,
                         shape = RoundedCornerShape(8.dp)
                     )
                     .fillMaxWidth(),
