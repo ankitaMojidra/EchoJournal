@@ -1,31 +1,43 @@
 package com.example.echojournal.ui.screens.Components.NewRecordingComponents
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun HashtagSelector(
     selectedTags: List<String>,
@@ -34,101 +46,109 @@ fun HashtagSelector(
     modifier: Modifier = Modifier
 ) {
     var searchText by remember { mutableStateOf("") }
-    var isDropdownExpanded by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(false) }
 
-    // Predefined tags list
     val predefinedTags = remember {
         listOf("Work", "Love", "Family", "Friends", "Health", "Travel", "Food", "Sports")
     }
 
-    // Filtered tags based on search
     val filteredTags = remember(searchText) {
-        if (searchText.isEmpty()) {
-            predefinedTags
-        } else {
-            predefinedTags.filter { it.lowercase().contains(searchText.lowercase()) }
+        predefinedTags.filter {
+            it.lowercase().contains(searchText.lowercase())
         }
     }
 
-    Column(modifier = modifier.fillMaxWidth().wrapContentHeight()) {
-        // Selected Tags
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
         FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.Start,
-            maxItemsInEachRow = Int.MAX_VALUE
+                .padding(bottom = 8.dp)
         ) {
             selectedTags.forEach { tag ->
                 TagChip(
-                    tag = tag,
+                    text = tag,
                     onRemove = { onTagRemove(tag) },
-                    modifier = Modifier.padding(end = 8.dp, bottom = 8.dp)
+                    modifier = Modifier.padding(end = 4.dp, bottom = 4.dp)
                 )
             }
         }
 
-        // Search TextField with Dropdown
-        Box(modifier = Modifier.fillMaxWidth()) {
+        ExposedDropdownMenuBox(
+            expanded = isExpanded,
+            onExpandedChange = { isExpanded = it },
+            modifier = modifier
+                .fillMaxWidth()
+        ) {
             OutlinedTextField(
                 value = searchText,
                 onValueChange = {
                     searchText = it
-                    isDropdownExpanded = true
+                    isExpanded = true
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                placeholder = { Text("Add tag...") },
-                colors = TextFieldDefaults.colors(
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedContainerColor = Color.Transparent
-                ),
-                shape = RoundedCornerShape(8.dp)
+                    .menuAnchor(),
+                placeholder = { Text("Type to search tags") },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded)
+                }
             )
 
-            DropdownMenu(
-                expanded = isDropdownExpanded,
-                onDismissRequest = { isDropdownExpanded = false },
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .padding(horizontal = 16.dp),
-                properties = PopupProperties(focusable = false)
+            ExposedDropdownMenu(
+                expanded = isExpanded && (searchText.isNotEmpty() || filteredTags.isNotEmpty()),
+                onDismissRequest = { isExpanded = false },
+                modifier = Modifier.exposedDropdownSize().
+                background(color = Color.White,
+                    shape = RoundedCornerShape(8.dp)
+                )
+                    .shadow(elevation = 4.dp,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .fillMaxWidth(),
             ) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth()
-                        .heightIn(max = 300.dp)
-                ) {
-                    items(filteredTags) { tag ->
-                        DropdownMenuItem(
-                            text = { Text("# $tag") },
-                            onClick = {
-                                onTagAdd(tag)
-                                searchText = ""
-                                isDropdownExpanded = false
+                // Show filtered existing tags
+                filteredTags.forEach { tag ->
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("#")
+                                Text(tag)
                             }
-                        )
-                    }
-
-                    // "Create new tag" option if search text isn't empty
-                    if (searchText.isNotEmpty() && !filteredTags.contains(searchText)) {
-                        item {
-                            DropdownMenuItem(
-                                text = { Text("Create '$searchText'") },
-                                onClick = {
-                                    onTagAdd(searchText)
-                                    searchText = ""
-                                    isDropdownExpanded = false
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = "Create tag"
-                                    )
-                                }
-                            )
+                        },
+                        onClick = {
+                            onTagAdd(tag)
+                            searchText = ""
+                            isExpanded = false
                         }
-                    }
+                    )
+                }
+
+                // Show "Create" option if search text doesn't match any existing tags
+                if (searchText.isNotEmpty() && !filteredTags.any {
+                        it.equals(searchText, ignoreCase = true)
+                    }) {
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("+ Create '")
+                                Text("#$searchText")
+                                Text("'")
+                            }
+                        },
+                        onClick = {
+                            onTagAdd(searchText)
+                            searchText = ""
+                            isExpanded = false
+                        }
+                    )
                 }
             }
         }
@@ -136,35 +156,41 @@ fun HashtagSelector(
 }
 
 @Composable
-private fun TagChip(
-    tag: String,
+fun TagChip(
+    text: String,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        color = MaterialTheme.colorScheme.surfaceVariant
+        modifier = modifier.height(32.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        tonalElevation = 2.dp
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "# $tag",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
             )
-            Spacer(modifier = Modifier.width(4.dp))
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Remove tag",
+
+            IconButton(
+                onClick = onRemove,
                 modifier = Modifier
-                    .size(18.dp)
-                    .clickable(onClick = onRemove),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                    .size(16.dp)
+                    .clip(CircleShape)
+            ) {
+                Icon(
+                    Icons.Rounded.Close,
+                    contentDescription = "Remove tag",
+                    modifier = Modifier.size(12.dp),
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
         }
     }
 }

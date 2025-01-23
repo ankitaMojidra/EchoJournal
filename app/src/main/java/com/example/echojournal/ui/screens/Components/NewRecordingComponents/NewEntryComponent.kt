@@ -67,20 +67,10 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
     var audioRecord by remember { mutableStateOf<AudioRecord?>(null) }
     var topic by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var selectedMoodForEntry by remember { mutableStateOf("") }
     var title by remember { mutableStateOf("") }
     var showHashtagSelector by remember { mutableStateOf(false) }
     var defaultTags by remember { mutableStateOf(listOf<String>()) }
 
-    /*val defaultTags = remember {
-        listOf(
-            "Work",
-            "Love",
-            "Community",
-            "Passion",
-            "Desire",
-            "Jane"
-        ) } */
 
     var selectedTags by remember { mutableStateOf(listOf<String>()) }
 
@@ -218,28 +208,17 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
 
         // Show HashtagSelector when showHashtagSelector is true
         if (showHashtagSelector) {
-            Dialog(
-                onDismissRequest = { showHashtagSelector = false }
-            ) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    HashtagSelector(
-                        selectedTags = defaultTags,
-                        onTagAdd = { tag ->
-                            if (!defaultTags.contains(tag)) {
-                                defaultTags = defaultTags + tag
-                            }
-                        },
-                        onTagRemove = { tag ->
-                            defaultTags = defaultTags - tag
-                        }
-                    )
+            HashtagSelector(
+                selectedTags = defaultTags,
+                onTagAdd = { tag ->
+                    if (!defaultTags.contains(tag)) {
+                        defaultTags = defaultTags + tag
+                    }
+                },
+                onTagRemove = { tag ->
+                    defaultTags = defaultTags - tag
                 }
-            }
+            )
         }
 
         ExpandableTextField(
@@ -308,9 +287,10 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
     }*/
 
         Spacer(modifier.weight(1f))
+
         BottomBar(modifier = modifier,
             isConfirmVisible = true,
-            isConfirmEnabled = true,
+            isConfirmEnabled = false,
             onConfirm = {
                 // Update the audioRecord title before saving
                 val updatedTitle = "selectedTags.joinToString"
