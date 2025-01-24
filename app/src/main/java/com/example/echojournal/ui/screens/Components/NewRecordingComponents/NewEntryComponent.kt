@@ -30,6 +30,8 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -48,12 +50,19 @@ import com.example.echojournal.R
 import com.example.echojournal.database.AudioRecord
 import com.example.echojournal.database.AudioRecordDatabase
 import com.example.echojournal.ui.theme.EchoJournalTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 @SuppressLint("UnrememberedMutableInteractionSource")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: () -> Unit) {
+fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: () -> Unit, onCancel: () ->   Unit) {
 
     val context = LocalContext.current
     val sliderPosition = remember { mutableFloatStateOf(0f) }
@@ -67,10 +76,26 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
     var title by remember { mutableStateOf("") }
     var showHashtagSelector by remember { mutableStateOf(false) }
     var defaultTags by remember { mutableStateOf(listOf<String>()) }
+    var isMoodSelected by remember { mutableStateOf(false) }
+    var selectedMood by remember { mutableStateOf<String?>(null) } // To store selected Mood
 
+    val isConfirmEnabled by remember {
+        derivedStateOf { defaultTags.isNotEmpty() && isMoodSelected }
+    }
 
-    var selectedTags by remember { mutableStateOf(listOf<String>()) }
-
+    // Load the existing audio record if editing
+    LaunchedEffect(audioRecordId) {
+        if (audioRecordId != 0) {
+            audioRecordDao.getRecordById(audioRecordId).collect { record ->
+                record?.let {
+                    audioRecord = it
+                    title = it.title
+                    description = it.description
+                    topic = it.topic.split(",").toString()
+                }
+            }
+        }
+    }
     Column(
         modifier = modifier.padding(start = 10.dp, end = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -176,32 +201,6 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
                     showHashtagSelector = true
                 }
             )
-
-            /* TextField(
-                 value = topic,
-                 onValueChange = { topic = it },
-                 modifier = Modifier.fillMaxWidth().clickable {
-                     showHashtagSelector = true
-                 },
-                 placeholder = {
-                     Text(
-                         context.getString(R.string.topic),
-                         color = colorResource(R.color.add_title_color),
-                         style = TextStyle(fontSize = 18.sp),
-
-                     )
-                 },
-                 textStyle = TextStyle(color = colorResource(R.color.black), fontSize = 18.sp),
-                 colors = TextFieldDefaults.colors(
-                     unfocusedContainerColor = Color.Transparent,
-                     focusedContainerColor = Color.Transparent,
-                     disabledContainerColor = Color.Transparent,
-                     unfocusedIndicatorColor = Color.Transparent,
-                     focusedIndicatorColor = Color.Transparent,
-                     disabledIndicatorColor = Color.Transparent,
-                 )
-             )*/
-
         }
 
         // Show HashtagSelector when showHashtagSelector is true
@@ -224,83 +223,63 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
             onDescriptionChange = { description = it }
         )
 
-        /* Row(
-            Modifier
-                .fillMaxWidth()
-                .clickable {
-                }, verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Edit,
-                contentDescription = "Edit",
-                Modifier.size(20.dp),
-                colorResource(R.color.add_title_color)
-            )*/
-
-        /* BasicTextField(
-             value = description,
-             onValueChange = { description = it },
-             modifier = Modifier.fillMaxWidth(),
-             textStyle = TextStyle(
-                 color = colorResource(R.color.black),
-                 fontSize = 18.sp
-             ),
-             maxLines = 3,
-             decorationBox = @Composable { innerTextField ->
-                 TextFieldDefaults.DecorationBox(
-                     value = description,
-                     innerTextField = {
-                         Text(
-                             text = description,
-                             maxLines = 3,
-                             overflow = TextOverflow.Ellipsis,
-                             style = TextStyle(
-                                 color = colorResource(R.color.black),
-                                 fontSize = 18.sp,
-                             )
-                         )
-                     },
-                     enabled = true,
-                     singleLine = false,
-                     visualTransformation = androidx.compose.ui.text.input.VisualTransformation.None,
-                     interactionSource = androidx.compose.foundation.interaction.MutableInteractionSource(),
-                     placeholder = {
-                         Text(
-                             text = context.getString(R.string.add_description),
-                             color = colorResource(R.color.add_title_color),
-                             style = TextStyle(fontSize = 18.sp)
-                         )
-                     },
-                     colors = TextFieldDefaults.colors(
-                         unfocusedContainerColor = Color.Transparent,
-                         focusedContainerColor = Color.Transparent,
-                         disabledContainerColor = Color.Transparent,
-                         unfocusedIndicatorColor = Color.Transparent,
-                         focusedIndicatorColor = Color.Transparent,
-                         disabledIndicatorColor = Color.Transparent,
-                     ),
-                 )
-             },
-         )
-    }*/
-
         Spacer(modifier.weight(1f))
 
-        BottomBar(modifier = modifier,
+        BottomBar(
+            modifier = modifier,
             isConfirmVisible = true,
-            isConfirmEnabled = false,
+            isConfirmEnabled = isConfirmEnabled,
             onConfirm = {
+                val topicString = defaultTags.joinToString(",")
                 // Update the audioRecord title before saving
-                val updatedTitle = "selectedTags.joinToString"
-                audioRecord?.let {
-                    val updatedRecord = it.copy(title = updatedTitle)
-                    // Assuming you have a function to update the record in the database
-                    // For simplicity, I'm calling onSaveComplete directly, you'll need to handle the database update here
-                    onSaveComplete()
-                } ?: onSaveComplete()
+                val updatedTitle = title
+                val desc = description
+                val mood = selectedMood
+                val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                val timestamp = System.currentTimeMillis()
+                val formattedDate = sdf.format(Date(timestamp))
 
+                if(audioRecord == null){
+                    val newRecord = AudioRecord(
+                        title = updatedTitle,
+                        timestamp = timestamp,
+                        audioData = byteArrayOf(),
+                        topic = topicString,
+                        description = desc,
+                        mood = mood ?: ""
+                    )
+                    CoroutineScope(Dispatchers.IO).launch {
+                        audioRecordDao.insert(newRecord)
+                        withContext(Dispatchers.Main) {
+                            onSaveComplete()
+                        }
+                    }
+                } else {
+                    audioRecord?.let {
+                        val updatedRecord = mood?.let { it1 ->
+                            it.copy(
+                                title = updatedTitle,
+                                topic = topicString,
+                                description = desc,
+                                mood = it1
+                            )
+                        }
+                        // Launch a coroutine to do the update
+                        CoroutineScope(Dispatchers.IO).launch {
+                            if (updatedRecord != null) {
+                                audioRecordDao.update(updatedRecord)
+                            }
+                            withContext(Dispatchers.Main) {
+                                onSaveComplete()
+                            }
+                        }
+                    }
+                }
             },
-            onCancel = { showBottomSheet = false })
+            onCancel = {
+                onCancel()
+                showBottomSheet = false
+            })
     }
 
     if (showBottomSheet) {
@@ -309,7 +288,9 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
             sheetState = sheetState,
             containerColor = colorResource(R.color.white)
         ) {
-            Mood(modifier = Modifier) {
+            Mood(modifier = Modifier) { mood ->
+                isMoodSelected = true
+                selectedMood = mood
                 showBottomSheet = false
             }
         }
@@ -320,6 +301,6 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
 @Composable
 fun GreetingPreview() {
     EchoJournalTheme {
-        NewEntryComponent(modifier = Modifier, audioRecordId = 1, onSaveComplete = {})
+        NewEntryComponent(modifier = Modifier, audioRecordId = 1, onSaveComplete = {}, onCancel = {})
     }
 }

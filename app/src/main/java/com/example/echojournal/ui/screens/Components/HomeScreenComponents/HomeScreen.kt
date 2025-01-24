@@ -447,7 +447,8 @@ private fun stopRecordingAndSave(
             CoroutineScope(Dispatchers.IO).launch {
                 val insertedId = audioRecordDao.insert(
                     AudioRecord(
-                        title = "Recording at $formattedDate",
+                        //title = "Recording at $formattedDate",
+                        title = "",
                         timestamp = timestamp,
                         audioData = audioBytes,
                         topic = "",

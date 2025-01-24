@@ -58,7 +58,8 @@ class NewRecordingActivity : ComponentActivity() {
                 { innerPadding ->
                     NewEntryComponent(modifier = Modifier.padding(innerPadding),
                         audioRecordId = audioRecordId,
-                        onSaveComplete = { finish() }
+                        onSaveComplete = { finish() },
+                        onCancel = { finish() }
                     )
                 }
             }

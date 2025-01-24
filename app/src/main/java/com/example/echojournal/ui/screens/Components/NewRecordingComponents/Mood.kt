@@ -22,7 +22,7 @@ import com.example.echojournal.R
 import com.example.echojournal.ui.theme.EchoJournalTheme
 
 @Composable
-fun Mood(modifier: Modifier, onCloseBottomSheet: () -> Unit) {
+fun Mood(modifier: Modifier, onCloseBottomSheet: (String?) -> Unit) {
 
     val context = LocalContext.current
     var selecedMood by remember { mutableStateOf<String?>(null) }
@@ -67,7 +67,6 @@ fun Mood(modifier: Modifier, onCloseBottomSheet: () -> Unit) {
                 textRes = R.string.exited,
                 isSelected = selecedMood == "exited",
                 onMoodSelected = { selecedMood = "exited" })
-
         }
 
         Spacer(modifier.height(10.dp))
@@ -77,7 +76,7 @@ fun Mood(modifier: Modifier, onCloseBottomSheet: () -> Unit) {
            isConfirmVisible = false,
            isConfirmEnabled = selecedMood!=null,
            onConfirm = onCloseBottomSheet,
-           onCancel = onCloseBottomSheet
+           onCancel = {onCloseBottomSheet(null)}
           )
     }
 }
