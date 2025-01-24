@@ -20,6 +20,8 @@ room-version = "2.6.1"
 ksp = "2.0.0-1.0.21"
 hiltVersion = "2.52"
 
+coilComposeVersion = "2.4.0"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -45,6 +47,8 @@ hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hil
 androidx-room = { group = "androidx.room", name = "room-ktx", version.ref = "room-version"}
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room-version" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room-version"}
+
+coil-compose-v240 = { module = "io.coil-kt:coil-compose", version.ref = "coilComposeVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

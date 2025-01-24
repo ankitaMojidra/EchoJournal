@@ -65,11 +65,13 @@ dependencies {
     //Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation (libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.navigation.compose)
 
     //Room Database
     implementation(libs.androidx.room)
     implementation(libs.room.runtime)
     ksp(libs.androidx.room.compiler)
+
+    implementation(libs.coil.compose.v240)
 
 }

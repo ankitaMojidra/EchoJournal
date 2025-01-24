@@ -170,43 +170,57 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
             modifier.padding(top = 30.dp, start = 10.dp)
         )
 
-        if (audioRecords.value.isNotEmpty()) {
-            Column {
-                Row(modifier = Modifier.padding(start = 10.dp)) {
+            if (audioRecords.value.isNotEmpty()) {
+                Column {
+                    Row(modifier = Modifier.padding(start = 10.dp)) {
+                        var showMoodDropDown by remember { mutableStateOf(false) }
+                        var selectedMoods by remember { mutableStateOf(setOf<String>()) }
+                        val selectedMoodText = selectedMoods.joinToString(", ")
 
-                    OutlinedButton(
-                        onClick = {},
-                        shape = RoundedCornerShape(20.dp),
-                        border = BorderStroke(1.dp, colorResource(R.color.add_title_color)),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = colorResource(R.color.all_mood))
-                    )
-                    {
-                        Text(context.getString(R.string.all_moods))
+                        OutlinedButton(
+                            onClick = {
+                                showMoodDropDown = !showMoodDropDown
+                            },
+                            shape = RoundedCornerShape(20.dp),
+                            border = BorderStroke(1.dp, colorResource(R.color.add_title_color)),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = colorResource(R.color.all_mood)),
+                        )
+                        {
+                            Text(selectedMoodText.ifEmpty { context.getString(R.string.all_moods) })
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        if (showMoodDropDown)
+                        {
+                            MoodDropDownMenu(
+                                onDismiss = { showMoodDropDown = false },
+                                selectedMoods = selectedMoods,
+                                updateSelectedMoods = { newSelectedMoods ->
+                                    selectedMoods = newSelectedMoods
+                                },
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = {},
+                            shape = RoundedCornerShape(20.dp),
+                            border = BorderStroke(1.dp, colorResource(R.color.add_title_color)),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = colorResource(R.color.all_mood))
+                        ) {
+                            Text(context.getString(R.string.all_topics))
+                        }
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                    OutlinedButton(
-                        onClick = {},
-                        shape = RoundedCornerShape(20.dp),
-                        border = BorderStroke(1.dp, colorResource(R.color.add_title_color)),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = colorResource(R.color.all_mood))
-                    ) {
-                        Text(context.getString(R.string.all_topics))
+                    LazyColumn {
+                        Log.d("HomeScreen", "Display Lazy column")
+
+                        items(audioRecords.value) { record ->
+                            RecordHistoryItem(record = record, onPlay = { })
+                        }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                LazyColumn {
-                    Log.d("HomeScreen", "Display Lazy column")
-
-                    items(audioRecords.value) { record ->
-                        RecordHistoryItem(record = record, onPlay = { })
-                    }
-                }
-            }
-        } else {
+            } else {
             Log.d("HomeScreen", "Display empty screen")
 
             Column(
