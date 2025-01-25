@@ -1,12 +1,10 @@
 package com.example.echojournal.ui.screens.Components.HomeScreenComponents
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,18 +20,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.drawable.toBitmap
 import com.example.echojournal.R
 
 @Composable
-fun MoodDropDownMenu(
+fun AllTopicDropDownMenu(
     onDismiss: () -> Unit,
-    selectedMoods: Set<String>,
-    updateSelectedMoods: (Set<String>) -> Unit,
+    selectedTopics: Set<String>,
+    updateSelectedTopics: (Set<String>) -> Unit
 ) {
     val context = LocalContext.current
     val moodItems = getMoodItems(context)
@@ -46,33 +42,23 @@ fun MoodDropDownMenu(
         },
         modifier = Modifier
             .padding(start = 16.dp, end = 16.dp)
-            .fillMaxWidth()
             .clip(shape = RoundedCornerShape(16.dp))
+            .fillMaxWidth()
             .background(color = Color.White)
     ) {
-        moodOptions.value.forEach { moodItem ->
+        moodOptions.value.forEach { topicItem ->
             DropdownMenuItem(onClick = {
-                val newSelectedMoods = if (moodItem.name in selectedMoods)
-                    selectedMoods - moodItem.name
+                val newSelectedMoods = if (topicItem.name in selectedTopics)
+                    selectedTopics - topicItem.name
                 else
-                    selectedMoods + moodItem.name
+                    selectedTopics + topicItem.name
 
-                updateSelectedMoods(newSelectedMoods)
-                // onDismiss()
+                updateSelectedTopics(newSelectedMoods)
             },
                 text = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        moodItem.icon?.let { icon ->
-                            Image(
-                                bitmap = icon.toBitmap().asImageBitmap(),
-                                contentDescription = moodItem.name,
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .padding(end = 8.dp)
-                            )
-                        }
-                        Text(moodItem.name)
-                        if (moodItem.name in selectedMoods) {
+                        Text(topicItem.name)
+                        if (topicItem.name in selectedTopics) {
                             Spacer(modifier = Modifier.width(8.dp))
                             Icon(
                                 imageVector = Icons.Filled.Check,
@@ -86,5 +72,3 @@ fun MoodDropDownMenu(
         }
     }
 }
-
-

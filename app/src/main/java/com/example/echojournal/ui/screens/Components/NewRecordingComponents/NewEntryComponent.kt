@@ -1,6 +1,7 @@
 package com.example.echojournal.ui.screens.Components.NewRecordingComponents
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.echojournal.R
 import com.example.echojournal.database.AudioRecord
+import com.example.echojournal.database.AudioRecordDao
 import com.example.echojournal.database.AudioRecordDatabase
 import com.example.echojournal.ui.theme.EchoJournalTheme
 import kotlinx.coroutines.CoroutineScope
@@ -79,13 +81,14 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
     var isMoodSelected by remember { mutableStateOf(false) }
     var selectedMood by remember { mutableStateOf<String?>(null) } // To store selected Mood
 
-    val isConfirmEnabled by remember {
+    val isSaveEnabled by remember {
         derivedStateOf { defaultTags.isNotEmpty() && isMoodSelected }
     }
 
     // Load the existing audio record if editing
     LaunchedEffect(audioRecordId) {
         if (audioRecordId != 0) {
+            Log.d("audioRecord","audioRecord ${audioRecord!!.id}")
             audioRecordDao.getRecordById(audioRecordId).collect { record ->
                 record?.let {
                     audioRecord = it
@@ -96,6 +99,7 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
             }
         }
     }
+
     Column(
         modifier = modifier.padding(start = 10.dp, end = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -228,58 +232,23 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
         BottomBar(
             modifier = modifier,
             isConfirmVisible = true,
-            isConfirmEnabled = isConfirmEnabled,
+            isConfirmEnabled = isSaveEnabled,
             onConfirm = {
-                val topicString = defaultTags.joinToString(",")
-                // Update the audioRecord title before saving
-                val updatedTitle = title
-                val desc = description
-                val mood = selectedMood
-                val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                val timestamp = System.currentTimeMillis()
-                val formattedDate = sdf.format(Date(timestamp))
-
-                if(audioRecord == null){
-                    val newRecord = AudioRecord(
-                        title = updatedTitle,
-                        timestamp = timestamp,
-                        audioData = byteArrayOf(),
-                        topic = topicString,
-                        description = desc,
-                        mood = mood ?: ""
-                    )
-                    CoroutineScope(Dispatchers.IO).launch {
-                        audioRecordDao.insert(newRecord)
-                        withContext(Dispatchers.Main) {
-                            onSaveComplete()
-                        }
-                    }
-                } else {
-                    audioRecord?.let {
-                        val updatedRecord = mood?.let { it1 ->
-                            it.copy(
-                                title = updatedTitle,
-                                topic = topicString,
-                                description = desc,
-                                mood = it1
-                            )
-                        }
-                        // Launch a coroutine to do the update
-                        CoroutineScope(Dispatchers.IO).launch {
-                            if (updatedRecord != null) {
-                                audioRecordDao.update(updatedRecord)
-                            }
-                            withContext(Dispatchers.Main) {
-                                onSaveComplete()
-                            }
-                        }
-                    }
-                }
+                saveAudioRecord(
+                    title = title,
+                    description = description,
+                    selectedMood = selectedMood,
+                    audioRecord = audioRecord,
+                    audioRecordDao = audioRecordDao,
+                    defaultTags = defaultTags,
+                    onSaveComplete = onSaveComplete
+                )
             },
             onCancel = {
                 onCancel()
                 showBottomSheet = false
-            })
+            },
+        )
     }
 
     if (showBottomSheet) {
@@ -292,6 +261,57 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
                 isMoodSelected = true
                 selectedMood = mood
                 showBottomSheet = false
+            }
+        }
+    }
+}
+
+fun saveAudioRecord(
+    title: String,
+    description: String,
+    selectedMood: String?,
+    audioRecord: AudioRecord?,
+    audioRecordDao: AudioRecordDao,
+    defaultTags: List<String>,
+    onSaveComplete: () -> Unit
+) {
+    val topicString = defaultTags.joinToString(",")
+    val timestamp = System.currentTimeMillis()
+    val formattedDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(timestamp))
+
+
+    if (audioRecord == null) {
+        val newRecord = AudioRecord(
+            title = title,
+            timestamp = timestamp,
+            audioData = byteArrayOf(),
+            topic = topicString,
+            description = description,
+            mood = selectedMood ?: ""
+        )
+        CoroutineScope(Dispatchers.IO).launch {
+            audioRecordDao.insert(newRecord)
+            withContext(Dispatchers.Main) {
+                onSaveComplete()
+            }
+        }
+    } else {
+        audioRecord.let {
+            val updatedRecord = selectedMood?.let { mood ->
+                it!!.copy(
+                    title = title,
+                    topic = topicString,
+                    description = description,
+                    mood = mood
+                )
+            }
+            CoroutineScope(Dispatchers.IO).launch {
+                if (updatedRecord != null) {
+                    audioRecordDao.update(updatedRecord)
+                }
+                withContext(Dispatchers.Main) {
+                    onSaveComplete()
+                }
             }
         }
     }

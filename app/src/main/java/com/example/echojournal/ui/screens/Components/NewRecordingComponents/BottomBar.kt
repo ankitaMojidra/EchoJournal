@@ -1,6 +1,5 @@
 package com.example.echojournal.ui.screens.Components.NewRecordingComponents
 
-import android.util.Log
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,14 +26,14 @@ fun BottomBar(
     modifier: Modifier,
     isConfirmVisible: Boolean,
     isConfirmEnabled: Boolean,
-    onConfirm: (String?) -> Unit,
+    onConfirm: () -> Unit,
     onCancel: () -> Unit
 ) {
     val context = LocalContext.current
 
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
         Button(
-           onClick = onCancel,
+            onClick = onCancel,
             shape = RoundedCornerShape(20.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = colorResource(R.color.cancel_backgroud),
@@ -52,8 +51,7 @@ fun BottomBar(
         if (isConfirmVisible) {
             Button(
                 onClick = {
-
-                    Log.i("Savrrrrrr","Saveeeeee")
+                    onConfirm()
                 },
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -73,7 +71,7 @@ fun BottomBar(
             }
         } else {
             Button(
-                onClick = {onConfirm(null)},
+                onClick = { onConfirm() },
                 enabled = isConfirmEnabled,
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(
