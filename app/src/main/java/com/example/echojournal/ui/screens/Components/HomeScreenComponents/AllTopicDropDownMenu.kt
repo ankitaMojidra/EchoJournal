@@ -14,13 +14,10 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import com.example.echojournal.R
@@ -29,12 +26,9 @@ import com.example.echojournal.R
 fun AllTopicDropDownMenu(
     onDismiss: () -> Unit,
     selectedTopics: Set<String>,
-    updateSelectedTopics: (Set<String>) -> Unit
+    updateSelectedTopics: (Set<String>) -> Unit,
+    topics: List<String>  // This parameter contains the topics
 ) {
-    val context = LocalContext.current
-    val moodItems = getMoodItems(context)
-    val moodOptions = remember { mutableStateOf(moodItems) }
-
     DropdownMenu(
         expanded = true,
         onDismissRequest = {
@@ -46,19 +40,21 @@ fun AllTopicDropDownMenu(
             .fillMaxWidth()
             .background(color = Color.White)
     ) {
-        moodOptions.value.forEach { topicItem ->
-            DropdownMenuItem(onClick = {
-                val newSelectedMoods = if (topicItem.name in selectedTopics)
-                    selectedTopics - topicItem.name
-                else
-                    selectedTopics + topicItem.name
+        // Use topics instead of moodOptions
+        topics.forEach { topicName ->
+            DropdownMenuItem(
+                onClick = {
+                    val newSelectedTopics = if (topicName in selectedTopics)
+                        selectedTopics - topicName
+                    else
+                        selectedTopics + topicName
 
-                updateSelectedTopics(newSelectedMoods)
-            },
+                    updateSelectedTopics(newSelectedTopics)
+                },
                 text = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(topicItem.name)
-                        if (topicItem.name in selectedTopics) {
+                        Text(topicName)
+                        if (topicName in selectedTopics) {
                             Spacer(modifier = Modifier.width(8.dp))
                             Icon(
                                 imageVector = Icons.Filled.Check,

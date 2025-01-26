@@ -35,11 +35,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.echojournal.Constants
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun HashtagSelector(
     selectedTags: List<String>,
+    allTopics: List<String>,
     onTagAdd: (String) -> Unit,
     onTagRemove: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -47,12 +49,8 @@ fun HashtagSelector(
     var searchText by remember { mutableStateOf("") }
     var isExpanded by remember { mutableStateOf(false) }
 
-    val predefinedTags = remember {
-        listOf("Work", "Love", "Family", "Friends", "Health", "Travel", "Food", "Sports")
-    }
-
     val filteredTags = remember(searchText) {
-        predefinedTags.filter {
+        allTopics.filter {
             it.lowercase().contains(searchText.lowercase())
         }
     }

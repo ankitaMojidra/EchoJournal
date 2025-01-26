@@ -46,8 +46,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.echojournal.Constants
 import com.example.echojournal.R
 import com.example.echojournal.database.AudioRecord
 import com.example.echojournal.database.AudioRecordDao
@@ -62,6 +64,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+
+private val ALL_TOPICS = listOf("#Work", "Love", "Family", "Friends", "Health", "Travel", "Food", "Sports")
 
 @SuppressLint("UnrememberedMutableInteractionSource")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,14 +85,12 @@ fun NewEntryComponent(
     val database = remember { AudioRecordDatabase.getDatabase(context) }
     val audioRecordDao = remember { database.audioRecordDao() }
     var audioRecord by remember { mutableStateOf<AudioRecord?>(null) }
-    var topic by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var title by remember { mutableStateOf("") }
     var showHashtagSelector by remember { mutableStateOf(false) }
     var defaultTags by remember { mutableStateOf(listOf<String>()) }
     var isMoodSelected by remember { mutableStateOf(false) }
     var selectedMood by remember { mutableStateOf<String?>(null) } // To store selected Mood
-
     val isSaveEnabled by remember {
         derivedStateOf { defaultTags.isNotEmpty() && isMoodSelected }
     }
@@ -207,6 +209,7 @@ fun NewEntryComponent(
         if (showHashtagSelector) {
             HashtagSelector(
                 selectedTags = defaultTags,
+                allTopics = Constants.ALL_TOPICS,
                 onTagAdd = { tag ->
                     if (!defaultTags.contains(tag)) {
                         defaultTags = defaultTags + tag
@@ -240,6 +243,7 @@ fun NewEntryComponent(
                     audioRecord = audioRecord,
                     audioRecordDao = audioRecordDao,
                     defaultTags = defaultTags,
+                    allTopics = Constants.ALL_TOPICS,
                     onSaveComplete = onSaveComplete
                 )
             },
@@ -275,17 +279,21 @@ fun saveAudioRecord(
     audioRecord: AudioRecord?,
     audioRecordDao: AudioRecordDao,
     defaultTags: List<String>,
+    allTopics: List<String>,
     onSaveComplete: () -> Unit
 ) {
     val topicString = defaultTags.joinToString(",")
+    val allTopicString = allTopics.joinToString("#")
+
        val newRecord = AudioRecord(
         title = title,
         description = description,
         mood = selectedMood ?: "",
         audioData = audioData,
         timestamp = timestamp,
-           duration = duration,
-        topic = topicString,
+        duration = duration,
+        selectedTopic = topicString,
+        allTopics = allTopicString
     )
     CoroutineScope(Dispatchers.IO).launch {
         audioRecordDao.insert(newRecord)

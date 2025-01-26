@@ -164,7 +164,7 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                         )
                     }
                     Text(text = record.description)
-                    TopicTags(record.topic)
+                    TopicTags(record.selectedTopic)
                 }
             }
         }

@@ -11,7 +11,8 @@ data class AudioRecord(
     @ColumnInfo(name = "timestamp") val timestamp: Long,
     @ColumnInfo(name = "duration") val duration: Long,
     @ColumnInfo(name = "audio_data") val audioData: ByteArray,
-    @ColumnInfo(name = "topic") val topic: String,
+    @ColumnInfo(name = "topic") val selectedTopic: String,
     @ColumnInfo(name = "description") val description: String,
-    @ColumnInfo(name = "mood") val mood: String
+    @ColumnInfo(name = "mood") val mood: String,
+    @ColumnInfo(name = "all_topics") val allTopics: String
 )

@@ -19,4 +19,7 @@ interface AudioRecordDao {
 
     @Update
     suspend fun update(audioRecord: AudioRecord)
+
+    @Query("SELECT all_topics FROM audio_records")
+    suspend fun getAllTopics(): List<String>
 }
