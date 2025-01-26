@@ -28,7 +28,9 @@ class NewRecordingActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val audioRecordId = intent.getIntExtra("audioRecordId", 0)
+        val audioData = intent.getByteArrayExtra("audioData")
+        val timestamp = intent.getLongExtra("timestamp", 0L)
+        val duration = intent.getLongExtra("duration", 0L)
 
         setContent {
             EchoJournalTheme {
@@ -57,7 +59,9 @@ class NewRecordingActivity : ComponentActivity() {
                 )
                 { innerPadding ->
                     NewEntryComponent(modifier = Modifier.padding(innerPadding),
-                        audioRecordId = audioRecordId,
+                        audioData = audioData ?: byteArrayOf() ,
+                        timestamp = timestamp,
+                        duration = duration,
                         onSaveComplete = { finish() },
                         onCancel = { finish() }
                     )

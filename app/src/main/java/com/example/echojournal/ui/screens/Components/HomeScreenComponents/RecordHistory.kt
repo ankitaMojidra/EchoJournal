@@ -1,6 +1,7 @@
 package com.example.echojournal.ui.screens.Components.HomeScreenComponents
 
 import android.media.MediaPlayer
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -48,6 +49,9 @@ import com.example.echojournal.ui.theme.EchoJournalTheme
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
@@ -86,7 +90,13 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                 .fillMaxWidth()
                 .padding(8.dp),
         ) {
-            Image(painter = painterResource(R.drawable.mood_exited), contentDescription = "mood")
+            when (record.mood) {
+                "Stressed" -> Image(painter = painterResource(R.drawable.mood_stressed), contentDescription = "mood")
+                "Sad" -> Image(painter = painterResource(R.drawable.mood_sad), contentDescription = "mood")
+                "Neutral" -> Image(painter = painterResource(R.drawable.mood_neatral), contentDescription = "mood")
+                "Peaceful" -> Image(painter = painterResource(R.drawable.mood_peaceful), contentDescription = "mood")
+                "Excited" -> Image(painter = painterResource(R.drawable.mood_exited), contentDescription = "mood")
+            }
 
             Spacer(modifier = Modifier.width(10.dp))
 
@@ -98,7 +108,10 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(text = record.title)
-                        Text(text = "17:30")
+                        val timestamp1 = record.timestamp
+                        val formattedDate =
+                            SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(timestamp1))
+                        Text(text = formattedDate)
                     }
 
                     Row(
@@ -141,17 +154,17 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                             }
                         }
                         Spacer(modifier = Modifier.width(8.dp))
-
-                        // Time Text
+                        val formattedDuration = com.example.echojournal.formatDuration(record.duration)
+                        Log.d("Duration::::::::::","Duration::::::${record.duration}")
+                        Log.d("Duration::::::::::","FormattedDuration::::::$formattedDuration")
                         Text(
-                            text = "0:00/12:30",
+                            text = "0:00/$formattedDuration",
                             style = MaterialTheme.typography.bodyMedium,
                             color = colorResource(R.color.audio_time)
                         )
                     }
-
-                    Text(text = "Description")
-                    Text(text = "Topics")
+                    Text(text = record.description)
+                    TopicTags(record.topic)
                 }
             }
         }

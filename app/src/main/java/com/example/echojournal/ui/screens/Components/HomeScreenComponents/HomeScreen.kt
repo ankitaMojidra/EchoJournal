@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.MediaMetadataRetriever
 import android.media.MediaRecorder
 import android.os.Build
 import android.util.Log
@@ -63,13 +64,10 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.echojournal.R
-import com.example.echojournal.database.AudioRecord
 import com.example.echojournal.database.AudioRecordDao
 import com.example.echojournal.database.AudioRecordDatabase
 import com.example.echojournal.ui.screens.NewRecordingActivity
 import com.example.echojournal.ui.theme.EchoJournalTheme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -462,39 +460,43 @@ private fun stopRecordingAndSave(
             val recordingFile = File(context.cacheDir, "temp_recording.mp3")
             setOutputFile(recordingFile.absolutePath) // Set output to a temp file
 
+            // Get audio duration
+            val duration = getAudioDuration(recordingFile.absolutePath)
+
             // Need to reconfigure the MediaRecorder to extract data. It's better to store to a temp file then read.
             val inputStream = FileInputStream(recordingFile)
             val audioBytes = inputStream.readBytes()
             inputStream.close()
             recordingFile.delete() // Delete the temp file
-
-            val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
             val timestamp = System.currentTimeMillis()
-            val formattedDate = sdf.format(Date(timestamp))
 
-            CoroutineScope(Dispatchers.IO).launch {
-                val insertedId = audioRecordDao.insert(
-                    AudioRecord(
-                        //title = "Recording at $formattedDate",
-                        title = "",
-                        timestamp = timestamp,
-                        audioData = audioBytes,
-                        topic = "",
-                        description = "",
-                        mood = ""
-                    )
-                )
-                release()
-                onRecordingStateChange(false)
-                val intent = Intent(context, NewRecordingActivity::class.java).apply {
-                    putExtra("audioRecordId", insertedId) // Pass the ID as an extra
-                }
-                context.startActivity(intent)
+            release()
+            onRecordingStateChange(false)
+            val intent = Intent(context, NewRecordingActivity::class.java).apply {
+                putExtra("audioData", audioBytes)
+                putExtra("timestamp", timestamp)
+                putExtra("duration", duration)
             }
+            context.startActivity(intent)
+
         } catch (e: Exception) {
             Toast.makeText(context, "Error saving recording", Toast.LENGTH_SHORT).show()
             onRecordingStateChange(false)
         }
+    }
+}
+
+private fun getAudioDuration(filePath: String): Long {
+    val retriever = MediaMetadataRetriever()
+    try {
+        retriever.setDataSource(filePath)
+        val durationString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+        return durationString?.toLongOrNull() ?: 0L
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return 0L
+    } finally {
+        retriever.release()
     }
 }
 

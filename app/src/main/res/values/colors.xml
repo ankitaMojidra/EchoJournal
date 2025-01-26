@@ -20,4 +20,5 @@
     <color name="save_text">#6C7084</color>
     <color name="all_mood">#3B4663</color>
     <color name="audio_time">#40434F</color>
+    <color name="topic_tag_bg">#F2F2F7</color>
 </resources>

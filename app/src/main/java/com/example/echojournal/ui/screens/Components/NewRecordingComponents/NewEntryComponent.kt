@@ -26,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -51,6 +52,7 @@ import com.example.echojournal.R
 import com.example.echojournal.database.AudioRecord
 import com.example.echojournal.database.AudioRecordDao
 import com.example.echojournal.database.AudioRecordDatabase
+import com.example.echojournal.formatDuration
 import com.example.echojournal.ui.theme.EchoJournalTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -64,8 +66,14 @@ import java.util.Locale
 @SuppressLint("UnrememberedMutableInteractionSource")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: () -> Unit, onCancel: () ->   Unit) {
-
+fun NewEntryComponent(
+    modifier: Modifier,
+    audioData: ByteArray,
+    timestamp: Long,
+    duration: Long,
+    onSaveComplete: () -> Unit,
+    onCancel: () -> Unit
+) {
     val context = LocalContext.current
     val sliderPosition = remember { mutableFloatStateOf(0f) }
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -83,21 +91,6 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
 
     val isSaveEnabled by remember {
         derivedStateOf { defaultTags.isNotEmpty() && isMoodSelected }
-    }
-
-    // Load the existing audio record if editing
-    LaunchedEffect(audioRecordId) {
-        if (audioRecordId != 0) {
-            Log.d("audioRecord","audioRecord ${audioRecord!!.id}")
-            audioRecordDao.getRecordById(audioRecordId).collect { record ->
-                record?.let {
-                    audioRecord = it
-                    title = it.title
-                    description = it.description
-                    topic = it.topic.split(",").toString()
-                }
-            }
-        }
     }
 
     Column(
@@ -187,7 +180,10 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
                 )
             )
             Spacer(modifier = Modifier.width(10.dp))
-            Text(text = "0:00/12:30")
+            val formattedDuration = formatDuration(duration)
+            Log.d("Duration::::::::::","Duration::::::$duration")
+            Log.d("Duration::::::::::","FormattedDuration::::::$formattedDuration")
+            Text(text = "0:00/$formattedDuration")
         }
 
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -238,6 +234,9 @@ fun NewEntryComponent(modifier: Modifier, audioRecordId: Int, onSaveComplete: ()
                     title = title,
                     description = description,
                     selectedMood = selectedMood,
+                    audioData = audioData,
+                    timestamp = timestamp,
+                    duration = duration,
                     audioRecord = audioRecord,
                     audioRecordDao = audioRecordDao,
                     defaultTags = defaultTags,
@@ -270,49 +269,28 @@ fun saveAudioRecord(
     title: String,
     description: String,
     selectedMood: String?,
+    audioData: ByteArray,
+    timestamp: Long,
+    duration: Long,
     audioRecord: AudioRecord?,
     audioRecordDao: AudioRecordDao,
     defaultTags: List<String>,
     onSaveComplete: () -> Unit
 ) {
     val topicString = defaultTags.joinToString(",")
-    val timestamp = System.currentTimeMillis()
-    val formattedDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(timestamp))
-
-
-    if (audioRecord == null) {
-        val newRecord = AudioRecord(
-            title = title,
-            timestamp = timestamp,
-            audioData = byteArrayOf(),
-            topic = topicString,
-            description = description,
-            mood = selectedMood ?: ""
-        )
-        CoroutineScope(Dispatchers.IO).launch {
-            audioRecordDao.insert(newRecord)
-            withContext(Dispatchers.Main) {
-                onSaveComplete()
-            }
-        }
-    } else {
-        audioRecord.let {
-            val updatedRecord = selectedMood?.let { mood ->
-                it!!.copy(
-                    title = title,
-                    topic = topicString,
-                    description = description,
-                    mood = mood
-                )
-            }
-            CoroutineScope(Dispatchers.IO).launch {
-                if (updatedRecord != null) {
-                    audioRecordDao.update(updatedRecord)
-                }
-                withContext(Dispatchers.Main) {
-                    onSaveComplete()
-                }
-            }
+       val newRecord = AudioRecord(
+        title = title,
+        description = description,
+        mood = selectedMood ?: "",
+        audioData = audioData,
+        timestamp = timestamp,
+           duration = duration,
+        topic = topicString,
+    )
+    CoroutineScope(Dispatchers.IO).launch {
+        audioRecordDao.insert(newRecord)
+        withContext(Dispatchers.Main) {
+            onSaveComplete()
         }
     }
 }
@@ -321,6 +299,5 @@ fun saveAudioRecord(
 @Composable
 fun GreetingPreview() {
     EchoJournalTheme {
-        NewEntryComponent(modifier = Modifier, audioRecordId = 1, onSaveComplete = {}, onCancel = {})
     }
 }

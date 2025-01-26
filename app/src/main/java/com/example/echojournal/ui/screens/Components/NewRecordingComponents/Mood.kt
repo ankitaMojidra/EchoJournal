@@ -47,35 +47,35 @@ fun Mood(modifier: Modifier, onCloseBottomSheet: (String?) -> Unit) {
             MoodItem(imageResGray = R.drawable.stressed_gray,
                 imageResColor = R.drawable.mood_stressed,
                 textRes = R.string.stressed,
-                isSelected = selecedMood == "stressed",
-                onMoodSelected = { selecedMood = "stressed" })
+                isSelected = selecedMood == "Stressed",
+                onMoodSelected = { selecedMood = "Stressed" })
 
             MoodItem(imageResGray = R.drawable.sad_gray,
                 imageResColor = R.drawable.mood_sad,
                 textRes = R.string.sad,
-                isSelected = selecedMood == "sad",
-                onMoodSelected = { selecedMood = "sad" })
+                isSelected = selecedMood == "Sad",
+                onMoodSelected = { selecedMood = "Sad" })
 
             MoodItem(imageResGray = R.drawable.neutral_gray,
                 imageResColor = R.drawable.mood_neatral,
                 textRes = R.string.neatral,
-                isSelected = selecedMood == "neatral",
-                onMoodSelected = { selecedMood = "neatral" })
+                isSelected = selecedMood == "Neutral",
+                onMoodSelected = { selecedMood = "Neutral" })
 
             MoodItem(imageResGray = R.drawable.peaceful_gray,
                 imageResColor = R.drawable.mood_peaceful,
                 textRes = R.string.peaceful,
-                isSelected = selecedMood == "peaceful",
+                isSelected = selecedMood == "Peaceful",
                 onMoodSelected = {
-                    selecedMood = "peaceful"
+                    selecedMood = "Peaceful"
                     Log.d("Mood", "Selected mood: $selecedMood")
                 })
 
             MoodItem(imageResGray = R.drawable.excited_gray,
                 imageResColor = R.drawable.mood_exited,
                 textRes = R.string.exited,
-                isSelected = selecedMood == "exited",
-                onMoodSelected = { selecedMood = "exited" })
+                isSelected = selecedMood == "Excited",
+                onMoodSelected = { selecedMood = "Excited" })
         }
 
         Spacer(modifier.height(10.dp))
