@@ -64,6 +64,7 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.echojournal.R
+import com.example.echojournal.database.AudioRecord
 import com.example.echojournal.database.AudioRecordDao
 import com.example.echojournal.database.AudioRecordDatabase
 import com.example.echojournal.ui.screens.NewRecordingActivity
@@ -104,7 +105,19 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
 
     val database = remember { AudioRecordDatabase.getDatabase(context) }
     val audioRecordDao = remember { database.audioRecordDao() }
-    val audioRecords = audioRecordDao.getAllRecords().collectAsState(initial = emptyList())
+    val allAudioRecords = audioRecordDao.getAllRecords().collectAsState(initial = emptyList())
+
+    // Selected moods for filtering
+    var selectedMoods by remember { mutableStateOf(setOf<String>()) }
+
+    // Filtered list of audio records
+    val filteredAudioRecords by remember(allAudioRecords.value, selectedMoods) {
+        Log.d("HomeScreen","Remember Block for filtering : selectedMoods = $selectedMoods")
+        mutableStateOf(
+            filterAudioRecordsByMood(allAudioRecords.value, selectedMoods)
+        )
+    }
+
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -147,7 +160,7 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
             }
         }
 
-        Log.d("HomeScreen", "Audio Record Size: ${audioRecords.value.size}")
+        Log.d("HomeScreen", "Audio Record Size: ${allAudioRecords.value.size}")
     }
 
     fun startRecordingEcho() {
@@ -168,11 +181,10 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
             modifier.padding(top = 30.dp, start = 10.dp)
         )
 
-        if (audioRecords.value.isNotEmpty()) {
+        if (allAudioRecords.value.isNotEmpty()) {
             Column {
                 Row(modifier = Modifier.padding(start = 10.dp)) {
-                    var showMoodDropDown by remember { mutableStateOf(false) }
-                    var selectedMoods by remember { mutableStateOf(setOf<String>()) }
+                    var showMoodDropDown by remember { mutableStateOf(false) } //  Added
                     val selectedMoodText = selectedMoods.joinToString(", ")
 
                     var showTopicDropDown by remember { mutableStateOf(false) }
@@ -181,7 +193,7 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
 
                     OutlinedButton(
                         onClick = {
-                            showMoodDropDown = !showMoodDropDown
+                             showMoodDropDown = !showMoodDropDown
                         },
                         shape = RoundedCornerShape(20.dp),
                         border = BorderStroke(1.dp, colorResource(R.color.add_title_color)),
@@ -192,15 +204,20 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                     }
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    if (showMoodDropDown) {
+                    if (showMoodDropDown)
+                    {
                         MoodDropDownMenu(
-                            onDismiss = { showMoodDropDown = false },
+                            onDismiss = {
+                                showMoodDropDown = false
+                            },
                             selectedMoods = selectedMoods,
                             updateSelectedMoods = { newSelectedMoods ->
+                                Log.d("HomeScreen", "Mood Drop Down Update selected moods $newSelectedMoods")
                                 selectedMoods = newSelectedMoods
                             },
                         )
                     }
+
                     OutlinedButton(
                         onClick = {
                             showTopicDropDown = !showTopicDropDown
@@ -227,7 +244,7 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                 LazyColumn {
                     Log.d("HomeScreen", "Display Lazy column")
 
-                    items(audioRecords.value) { record ->
+                    items(filteredAudioRecords, key = { record -> record.id }) { record ->
                         RecordHistoryItem(record = record, onPlay = { })
                     }
                 }
@@ -430,6 +447,27 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
     }
 }
 
+private fun filterAudioRecordsByMood(
+    records: List<AudioRecord>,
+    selectedMoods: Set<String>
+): List<AudioRecord> {
+    Log.d("HomeScreen", "filterAudioRecordsByMood: selectedMoods = $selectedMoods")
+
+    if (selectedMoods.isEmpty()) {
+        Log.d("HomeScreen", "filterAudioRecordsByMood: no moods selected, returning all records")
+        return records // Return all records if no moods are selected
+    }
+
+    val filteredList = records.filter { record ->
+        val recordMood = record.mood
+        val isMatch = selectedMoods.any { it == recordMood } // Check using `==`
+        Log.d("HomeScreen", "filterAudioRecordsByMood: record mood = $recordMood, match = $isMatch, selected mood ${selectedMoods}")
+        isMatch
+    }
+
+    Log.d("HomeScreen", "filterAudioRecordsByMood: filtered list size = ${filteredList.size}")
+    return filteredList
+}
 private fun pauseRecording(mediaRecorder: MediaRecorder?) {
     mediaRecorder?.pause()
 }
@@ -476,6 +514,8 @@ private fun stopRecordingAndSave(
                 putExtra("audioData", audioBytes)
                 putExtra("timestamp", timestamp)
                 putExtra("duration", duration)
+
+                //Pass selected mood to New Recording Activity
             }
             context.startActivity(intent)
 

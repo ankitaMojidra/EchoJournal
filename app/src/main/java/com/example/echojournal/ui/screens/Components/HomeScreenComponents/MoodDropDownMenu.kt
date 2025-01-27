@@ -1,5 +1,6 @@
 package com.example.echojournal.ui.screens.Components.HomeScreenComponents
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
@@ -39,6 +40,8 @@ fun MoodDropDownMenu(
     val moodItems = getMoodItems(context)
     val moodOptions = remember { mutableStateOf(moodItems) }
 
+    Log.d("MoodDropDownMenu", "MoodDropDownMenu : selectedMoods = $selectedMoods")
+
     DropdownMenu(
         expanded = true,
         onDismissRequest = {
@@ -56,9 +59,10 @@ fun MoodDropDownMenu(
                     selectedMoods - moodItem.name
                 else
                     selectedMoods + moodItem.name
-
-                updateSelectedMoods(newSelectedMoods)
-                // onDismiss()
+                Log.d("MoodDropDownMenu", "DropdownMenuItem : newSelectedMoods = $newSelectedMoods")
+                // **Important: Create a new Set to update the state**
+                updateSelectedMoods(newSelectedMoods.toSet())
+                onDismiss()
             },
                 text = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -86,5 +90,6 @@ fun MoodDropDownMenu(
         }
     }
 }
+
 
 

@@ -2,13 +2,14 @@ package com.example.echojournal.database
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AudioRecordDao {
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(audioRecord: AudioRecord): Long
 
     @Query("SELECT * FROM audio_records ORDER BY timestamp DESC")

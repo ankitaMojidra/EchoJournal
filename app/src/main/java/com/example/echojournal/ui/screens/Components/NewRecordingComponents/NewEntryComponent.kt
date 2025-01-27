@@ -26,13 +26,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -46,7 +44,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.echojournal.Constants
@@ -60,12 +57,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-
-
-private val ALL_TOPICS = listOf("#Work", "Love", "Family", "Friends", "Health", "Travel", "Food", "Sports")
 
 @SuppressLint("UnrememberedMutableInteractionSource")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -183,8 +174,8 @@ fun NewEntryComponent(
             )
             Spacer(modifier = Modifier.width(10.dp))
             val formattedDuration = formatDuration(duration)
-            Log.d("Duration::::::::::","Duration::::::$duration")
-            Log.d("Duration::::::::::","FormattedDuration::::::$formattedDuration")
+            Log.d("Duration::::::::::", "Duration::::::$duration")
+            Log.d("Duration::::::::::", "FormattedDuration::::::$formattedDuration")
             Text(text = "0:00/$formattedDuration")
         }
 
@@ -285,7 +276,7 @@ fun saveAudioRecord(
     val topicString = defaultTags.joinToString(",")
     val allTopicString = allTopics.joinToString("#")
 
-       val newRecord = AudioRecord(
+    val newRecord = AudioRecord(
         title = title,
         description = description,
         mood = selectedMood ?: "",

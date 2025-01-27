@@ -181,8 +181,5 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
 @Composable
 fun RecordHistoryItemPreview() {
     EchoJournalTheme {
-        RecordHistoryItem(
-            record = TODO()
-        ) { }
     }
 }
