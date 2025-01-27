@@ -1,5 +1,6 @@
 package com.example.echojournal.ui.screens.Components.HomeScreenComponents
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,37 +25,35 @@ import com.example.echojournal.R
 
 @Composable
 fun AllTopicDropDownMenu(
-    onDismiss: () -> Unit,
-    selectedTopics: Set<String>,
-    updateSelectedTopics: (Set<String>) -> Unit,
-    topics: List<String>  // This parameter contains the topics
+onDismiss: () -> Unit,
+selectedTopics: Set<String>,
+updateSelectedTopics: (Set<String>) -> Unit,
+topics: List<String>
 ) {
     DropdownMenu(
         expanded = true,
-        onDismissRequest = {
-            onDismiss()
-        },
+        onDismissRequest = {onDismiss()},
         modifier = Modifier
             .padding(start = 16.dp, end = 16.dp)
             .clip(shape = RoundedCornerShape(16.dp))
             .fillMaxWidth()
             .background(color = Color.White)
     ) {
-        // Use topics instead of moodOptions
-        topics.forEach { topicName ->
+        topics.forEach { topic ->
             DropdownMenuItem(
                 onClick = {
-                    val newSelectedTopics = if (topicName in selectedTopics)
-                        selectedTopics - topicName
+                    val newSelectedTopics = if (topic in selectedTopics)
+                        selectedTopics - topic
                     else
-                        selectedTopics + topicName
-
-                    updateSelectedTopics(newSelectedTopics)
+                        selectedTopics + topic
+                    Log.d("MoodDropDownMenu", "DropdownMenuItem : newSelecteTopics = $newSelectedTopics")
+                    updateSelectedTopics(newSelectedTopics.toSet())
+                    onDismiss()
                 },
                 text = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(topicName)
-                        if (topicName in selectedTopics) {
+                        Text(topic)
+                        if (topic in selectedTopics) {
                             Spacer(modifier = Modifier.width(8.dp))
                             Icon(
                                 imageVector = Icons.Filled.Check,

@@ -21,4 +21,9 @@
     <color name="all_mood">#3B4663</color>
     <color name="audio_time">#40434F</color>
     <color name="topic_tag_bg">#F2F2F7</color>
+    <color name="neatral_bg">#EEF7F3</color>
+    <color name="peaceful_bg">#F6F2F5</color>
+    <color name="sad_bg">#EEF0FF</color>
+    <color name="exited_bg">#F5F2EF</color>
+    <color name="stressed_bg"></color>
 </resources>

@@ -63,14 +63,17 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.echojournal.Constants
 import com.example.echojournal.R
 import com.example.echojournal.database.AudioRecord
 import com.example.echojournal.database.AudioRecordDao
 import com.example.echojournal.database.AudioRecordDatabase
 import com.example.echojournal.ui.screens.NewRecordingActivity
 import com.example.echojournal.ui.theme.EchoJournalTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -109,15 +112,15 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
 
     // Selected moods for filtering
     var selectedMoods by remember { mutableStateOf(setOf<String>()) }
+    var selectedTopicsWithDB by remember { mutableStateOf<Set<String>>(emptySet()) }  // Fix the type declaration
 
     // Filtered list of audio records
-    val filteredAudioRecords by remember(allAudioRecords.value, selectedMoods) {
-        Log.d("HomeScreen","Remember Block for filtering : selectedMoods = $selectedMoods")
+    val filteredAudioRecords by remember(allAudioRecords.value, selectedMoods, selectedTopicsWithDB) {
+        Log.d("HomeScreen","Remember Block for filtering : selectedMoods = $selectedMoods , selectedTopicsWithDB = $selectedTopicsWithDB")
         mutableStateOf(
-            filterAudioRecordsByMood(allAudioRecords.value, selectedMoods)
+            filterAudioRecordsByMoodAndTopic(allAudioRecords.value, selectedMoods,selectedTopicsWithDB)
         )
     }
-
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -186,10 +189,9 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                 Row(modifier = Modifier.padding(start = 10.dp)) {
                     var showMoodDropDown by remember { mutableStateOf(false) } //  Added
                     val selectedMoodText = selectedMoods.joinToString(", ")
+                    var selectedTopicText = selectedTopicsWithDB.joinToString (", ")
 
                     var showTopicDropDown by remember { mutableStateOf(false) }
-                    val selectedTopics by remember { mutableStateOf(setOf(String)) }
-                    val selectedTopicText = selectedTopics.joinToString { ", " }
 
                     OutlinedButton(
                         onClick = {
@@ -202,6 +204,7 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                     {
                         Text(selectedMoodText.ifEmpty { context.getString(R.string.all_moods) })
                     }
+
                     Spacer(modifier = Modifier.width(8.dp))
 
                     if (showMoodDropDown)
@@ -231,16 +234,41 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
 
                     Spacer(modifier = Modifier.height(20.dp))
 
+                    var allTopics by remember { mutableStateOf(listOf<String>()) }
+
+                    // Fetch topics when component loads
+                   LaunchedEffect(Unit) {
+                        val topics = withContext(Dispatchers.IO) {
+                            // Get topics and split by "#" since they're stored as "#topic1#topic2#topic3"
+                            audioRecordDao.getAllTopics()
+                                .firstOrNull()
+                                ?.split("#")
+                                ?.filter { it.isNotEmpty() }
+                                ?: emptyList()
+                        }
+                        allTopics = topics
+                    }
+
                     if (showTopicDropDown) {
-                        /*AllTopicDropDownMenu(
+                        AllTopicDropDownMenu(
                             onDismiss = { showTopicDropDown = false },
-                            selectedTopics = selectedTopics,
+                            selectedTopics = selectedTopicsWithDB,
                             updateSelectedTopics = { newSelectedTopics ->
-                                selectedTopics = newSelectedTopics
+                                selectedTopicsWithDB = newSelectedTopics
+                               // selectedTopicText = newSelectedTopics.joinToString { ", " }
+
                             },
-                        )*/
+                            topics = allTopics
+                        )
                     }
                 }
+             /*   LazyColumn {
+                    Log.d("HomeScreen", "Display Lazy column")
+
+                    items(filteredAudioRecords, key = { record -> record.id }) { record ->
+                        RecordHistoryItem(record = record, onPlay = { })
+                    }
+                }*/
                 LazyColumn {
                     Log.d("HomeScreen", "Display Lazy column")
 
@@ -468,6 +496,32 @@ private fun filterAudioRecordsByMood(
     Log.d("HomeScreen", "filterAudioRecordsByMood: filtered list size = ${filteredList.size}")
     return filteredList
 }
+
+private fun filterAudioRecordsByMoodAndTopic(
+    records: List<AudioRecord>,
+    selectedMoods: Set<String>,
+    selectedTopics: Set<String>
+): List<AudioRecord> {
+    Log.d("HomeScreen", "filterAudioRecordsByMoodAndTopic: selectedMoods = $selectedMoods, selectedTopics = $selectedTopics")
+
+    if (selectedMoods.isEmpty() && selectedTopics.isEmpty()) {
+        Log.d("HomeScreen", "filterAudioRecordsByMoodAndTopic: no moods or topics selected, returning all records")
+        return records // Return all records if no moods are selected
+    }
+    val filteredList = records.filter { record ->
+        val moodMatch = selectedMoods.isEmpty() || selectedMoods.any { it == record.mood }
+        val topicMatch = selectedTopics.isEmpty() || selectedTopics.any{ it == record.selectedTopic }
+
+        val isMatch = moodMatch && topicMatch
+
+        Log.d("HomeScreen", "filterAudioRecordsByMoodAndTopic: record mood = ${record.mood}, match = $isMatch, selected mood ${selectedMoods}, selected topic ${selectedTopics} record topic ${record.selectedTopic}")
+        isMatch
+    }
+
+    Log.d("HomeScreen", "filterAudioRecordsByMoodAndTopic: filtered list size = ${filteredList.size}")
+    return filteredList
+}
+
 private fun pauseRecording(mediaRecorder: MediaRecorder?) {
     mediaRecorder?.pause()
 }
