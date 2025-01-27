@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -91,33 +90,63 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                 .padding(8.dp),
         ) {
             when (record.mood) {
-                "Stressed" -> Image(painter = painterResource(R.drawable.mood_stressed), contentDescription = "mood")
-                "Sad" -> Image(painter = painterResource(R.drawable.mood_sad), contentDescription = "mood")
-                "Neutral" -> Image(painter = painterResource(R.drawable.mood_neatral), contentDescription = "mood")
-                "Peaceful" -> Image(painter = painterResource(R.drawable.mood_peaceful), contentDescription = "mood")
-                "Excited" -> Image(painter = painterResource(R.drawable.mood_exited), contentDescription = "mood")
+                "Stressed" -> Image(
+                    painter = painterResource(R.drawable.mood_stressed),
+                    contentDescription = "mood"
+                )
+
+                "Sad" -> Image(
+                    painter = painterResource(R.drawable.mood_sad),
+                    contentDescription = "mood"
+                )
+
+                "Neutral" -> Image(
+                    painter = painterResource(R.drawable.mood_neatral),
+                    contentDescription = "mood"
+                )
+
+                "Peaceful" -> Image(
+                    painter = painterResource(R.drawable.mood_peaceful),
+                    contentDescription = "mood"
+                )
+
+                "Excited" -> Image(
+                    painter = painterResource(R.drawable.mood_exited),
+                    contentDescription = "mood"
+                )
             }
 
             Spacer(modifier = Modifier.width(10.dp))
 
             Card(colors = CardDefaults.cardColors(containerColor = colorResource(R.color.white))) {
 
-                Column(Modifier
-                    .padding(10.dp)
-                    .fillMaxWidth()) {
+                Column(
+                    Modifier
+                        .padding(10.dp)
+                        .fillMaxWidth()
+                ) {
 
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
                         Text(text = record.title)
                         val timestamp1 = record.timestamp
                         val formattedDate =
-                            SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(timestamp1))
+                            SimpleDateFormat(
+                                "hh:mm a",
+                                Locale.getDefault()
+                            ).format(Date(timestamp1))
                         Text(text = formattedDate)
                     }
 
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFF8F0FA), shape = RoundedCornerShape(50)) // Background color and rounded corners
+                            .background(
+                                Color(0xFFF8F0FA),
+                                shape = RoundedCornerShape(50)
+                            ) // Background color and rounded corners
                             .padding(horizontal = 8.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -138,8 +167,13 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                         Spacer(modifier = Modifier.width(8.dp))
 
                         // Progress Bar
-                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                            Canvas(modifier = Modifier.fillMaxWidth().height(8.dp)) {
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            Canvas(modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)) {
                                 // Background track
                                 drawRoundRect(
                                     color = Color(0xFFE6C9EA), // Light gray/purple color for the track
@@ -154,9 +188,10 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                             }
                         }
                         Spacer(modifier = Modifier.width(8.dp))
-                        val formattedDuration = com.example.echojournal.formatDuration(record.duration)
-                        Log.d("Duration::::::::::","Duration::::::${record.duration}")
-                        Log.d("Duration::::::::::","FormattedDuration::::::$formattedDuration")
+                        val formattedDuration =
+                            com.example.echojournal.formatDuration(record.duration)
+                        Log.d("Duration::::::::::", "Duration::::::${record.duration}")
+                        Log.d("Duration::::::::::", "FormattedDuration::::::$formattedDuration")
                         Text(
                             text = "0:00/$formattedDuration",
                             style = MaterialTheme.typography.bodyMedium,

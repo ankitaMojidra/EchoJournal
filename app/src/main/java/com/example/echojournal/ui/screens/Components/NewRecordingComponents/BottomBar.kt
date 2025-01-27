@@ -20,8 +20,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import com.example.echojournal.R
-import com.example.echojournal.database.AudioRecord
-import com.example.echojournal.database.AudioRecordDao
 
 @Composable
 fun BottomBar(
@@ -35,7 +33,7 @@ fun BottomBar(
 
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
         Button(
-           onClick = onCancel,
+            onClick = onCancel,
             shape = RoundedCornerShape(20.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = colorResource(R.color.cancel_backgroud),
@@ -73,7 +71,7 @@ fun BottomBar(
             }
         } else {
             Button(
-                onClick = {onConfirm()},
+                onClick = { onConfirm() },
                 enabled = isConfirmEnabled,
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(

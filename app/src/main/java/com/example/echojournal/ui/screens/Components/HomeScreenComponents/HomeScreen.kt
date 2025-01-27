@@ -188,8 +188,8 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                     val selectedMoodText = selectedMoods.joinToString(", ")
 
                     var showTopicDropDown by remember { mutableStateOf(false) }
-                    var selectedTopics by remember { mutableStateOf(setOf(String)) }
-                    var selectedTopicText = selectedTopics.joinToString { ", " }
+                    val selectedTopics by remember { mutableStateOf(setOf(String)) }
+                    val selectedTopicText = selectedTopics.joinToString { ", " }
 
                     OutlinedButton(
                         onClick = {
