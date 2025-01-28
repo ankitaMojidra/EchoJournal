@@ -3,12 +3,11 @@ package com.example.echojournal.ui.screens.Components.HomeScreenComponents
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -17,8 +16,10 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,34 +55,52 @@ fun MoodDropDownMenu(
             .background(color = Color.White)
     ) {
         moodOptions.value.forEach { moodItem ->
-            DropdownMenuItem(onClick = {
-                val newSelectedMoods = if (moodItem.name in selectedMoods)
-                    selectedMoods - moodItem.name
-                else
-                    selectedMoods + moodItem.name
-                Log.d("MoodDropDownMenu", "DropdownMenuItem : newSelectedMoods = $newSelectedMoods")
-                // **Important: Create a new Set to update the state**
-                updateSelectedMoods(newSelectedMoods.toSet())
-                onDismiss()
-            },
+            var isItemSelected by remember { mutableStateOf(moodItem.name in selectedMoods) }
+            DropdownMenuItem(
+                onClick = {
+                    val newSelectedMoods = if (moodItem.name in selectedMoods)
+                        selectedMoods - moodItem.name
+                    else
+                        selectedMoods + moodItem.name
+                    Log.d(
+                        "MoodDropDownMenu",
+                        "DropdownMenuItem : newSelectedMoods = $newSelectedMoods"
+                    )
+                    // **Important: Create a new Set to update the state**
+                    updateSelectedMoods(newSelectedMoods.toSet())
+                    isItemSelected = !isItemSelected
+                    onDismiss()
+                },
+                modifier = Modifier
+                    .padding(start = 10.dp, end = 10.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(if (isItemSelected) colorResource(R.color.selected_row) else Color.White),
                 text = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        moodItem.icon?.let { icon ->
-                            Image(
-                                bitmap = icon.toBitmap().asImageBitmap(),
-                                contentDescription = moodItem.name,
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .padding(end = 8.dp)
-                            )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween // Removed spacer
+                    ) {
+                        Row( // Added nested Row
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            moodItem.icon?.let { icon ->
+                                Image(
+                                    bitmap = icon.toBitmap().asImageBitmap(),
+                                    contentDescription = moodItem.name,
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .padding(end = 8.dp)
+                                )
+                            }
+                            Text(moodItem.name, color = colorResource(R.color.all_mood))
                         }
-                        Text(moodItem.name)
-                        if (moodItem.name in selectedMoods) {
-                            Spacer(modifier = Modifier.width(8.dp))
+                        if (isItemSelected) {
                             Icon(
                                 imageVector = Icons.Filled.Check,
                                 contentDescription = "Selected",
-                                tint = colorResource(R.color.all_mood)
+                                tint = colorResource(R.color.cancel_color)
                             )
                         }
                     }
@@ -90,6 +109,5 @@ fun MoodDropDownMenu(
         }
     }
 }
-
 
 

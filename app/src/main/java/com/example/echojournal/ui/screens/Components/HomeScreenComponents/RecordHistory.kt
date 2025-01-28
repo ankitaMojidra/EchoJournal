@@ -1,8 +1,10 @@
 package com.example.echojournal.ui.screens.Components.HomeScreenComponents
 
 import android.media.MediaPlayer
+import android.os.Build
 import android.util.Log
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -44,18 +46,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.echojournal.R
 import com.example.echojournal.database.AudioRecord
+import com.example.echojournal.getRelativeDay
 import com.example.echojournal.ui.theme.EchoJournalTheme
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.Locale
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
     val context = LocalContext.current
@@ -86,7 +86,8 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
 
     Column(modifier = Modifier.padding(start = 10.dp, end = 10.dp)) {
 
-        Text(text = "Today")
+        val day = getRelativeDay(record.timestamp)
+        Text(text = day)
 
         Row(
             modifier = Modifier
@@ -99,7 +100,7 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                     contentDescription = "mood"
                 )
 
-                "Sad" -> Image(
+                " Sad" -> Image(
                     painter = painterResource(R.drawable.mood_sad),
                     contentDescription = "mood"
                 )
@@ -121,15 +122,12 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
             }
 
             Spacer(modifier = Modifier.width(10.dp))
-
             Card(colors = CardDefaults.cardColors(containerColor = colorResource(R.color.white))) {
-
                 Column(
                     Modifier
                         .padding(10.dp)
                         .fillMaxWidth()
                 ) {
-
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -144,14 +142,15 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                         Text(text = formattedDate)
                     }
 
+                    val playIconColor = getPlayIconColorForMood(record.mood)
+                    val backgroundColor = getBackgroundColorForMood(record.mood)
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(
-                                Color(0xFFF8F0FA),
-                                shape = RoundedCornerShape(50)
-                            ) // Background color and rounded corners
-                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                            .clip(shape = RoundedCornerShape(50))
+                            .background(color = backgroundColor)
+                            .padding(5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Play Button
@@ -165,7 +164,7 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                             Icon(
                                 imageVector = Icons.Filled.PlayArrow,
                                 contentDescription = "Play",
-                                tint = Color.Magenta // Adjust the play icon color if needed
+                                tint = playIconColor
                             )
                         }
                         Spacer(modifier = Modifier.width(8.dp))
@@ -175,9 +174,11 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                             modifier = Modifier.weight(1f),
                             contentAlignment = Alignment.CenterStart
                         ) {
-                            Canvas(modifier = Modifier
-                                .fillMaxWidth()
-                                .height(8.dp)) {
+                            Canvas(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp)
+                            ) {
                                 // Background track
                                 drawRoundRect(
                                     color = Color(0xFFE6C9EA), // Light gray/purple color for the track
@@ -199,7 +200,8 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                         Text(
                             text = "0:00/$formattedDuration",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = colorResource(R.color.audio_time)
+                            color = colorResource(R.color.audio_time),
+                            modifier = Modifier.padding(end = 8.dp)
                         )
                     }
                     Text(text = record.description)
@@ -213,6 +215,30 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
         onDispose {
             mediaPlayer.release()
         }
+    }
+}
+
+@Composable
+private fun getBackgroundColorForMood(mood: String): Color {
+    return when (mood) {
+        "Stressed" -> colorResource(R.color.stressed_bg)
+        "Sad" -> colorResource(R.color.sad_bg)
+        "Neutral" -> colorResource(R.color.neatral_bg)
+        "Peaceful" -> colorResource(R.color.peaceful_bg)
+        "Excited" -> colorResource(R.color.exited_bg)
+        else -> Color.Transparent // Default color if mood is not recognized
+    }
+}
+
+@Composable
+private fun getPlayIconColorForMood(mood: String): Color {
+    return when (mood) {
+        "Stressed" -> colorResource(R.color.stressed_play_icon)
+        "Sad" -> colorResource(R.color.sad_play_icon)
+        "Neutral" -> colorResource(R.color.neutral_pay_icon)
+        "Peaceful" -> colorResource(R.color.peaceful_play_icon)
+        "Excited" -> colorResource(R.color.exited_play_icon)
+        else -> Color.Transparent // Default color if mood is not recognized
     }
 }
 
