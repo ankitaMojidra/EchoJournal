@@ -39,14 +39,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.echojournal.R
 import com.example.echojournal.database.AudioRecord
+import com.example.echojournal.getDate
 import com.example.echojournal.getRelativeDay
+import com.example.echojournal.ui.screens.Components.getBackgroundColorForMood
+import com.example.echojournal.ui.screens.Components.getPlayIconColorForMood
 import com.example.echojournal.ui.theme.EchoJournalTheme
 import java.io.File
 import java.io.FileOutputStream
@@ -134,11 +141,7 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                     ) {
                         Text(text = record.title)
                         val timestamp1 = record.timestamp
-                        val formattedDate =
-                            SimpleDateFormat(
-                                "hh:mm a",
-                                Locale.getDefault()
-                            ).format(Date(timestamp1))
+                        val formattedDate = getDate(timestamp1)
                         Text(text = formattedDate)
                     }
 
@@ -155,18 +158,34 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                     ) {
                         // Play Button
                         IconButton(
-                            onClick = { /*TODO*/ },
+                            onClick = {
+                                if (!isPlaying) {
+                                    playAudio(record.audioData)
+                                    onPlay()
+                                } else {
+                                    mediaPlayer.stop()
+                                    isPlaying = false
+                                }
+                            },
                             modifier = Modifier
                                 .clip(CircleShape)
                                 .background(Color.White)
                                 .size(40.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.PlayArrow,
-                                contentDescription = "Play",
-                                tint = playIconColor
+                                painter = rememberVectorPainter(
+                                    if(isPlaying) {
+                                        ImageVector.vectorResource(id = R.drawable.icon_pause)
+                                    } else {
+                                        ImageVector.vectorResource(id = R.drawable.audio_play)
+                                    }
+                                ),
+                                contentDescription = if(isPlaying) "Pause" else "Play",
+                                tint = playIconColor,
+                                modifier = Modifier.size(45.dp)
                             )
                         }
+
                         Spacer(modifier = Modifier.width(8.dp))
 
                         // Progress Bar
@@ -218,29 +237,7 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
     }
 }
 
-@Composable
-private fun getBackgroundColorForMood(mood: String): Color {
-    return when (mood) {
-        "Stressed" -> colorResource(R.color.stressed_bg)
-        "Sad" -> colorResource(R.color.sad_bg)
-        "Neutral" -> colorResource(R.color.neatral_bg)
-        "Peaceful" -> colorResource(R.color.peaceful_bg)
-        "Excited" -> colorResource(R.color.exited_bg)
-        else -> Color.Transparent // Default color if mood is not recognized
-    }
-}
 
-@Composable
-private fun getPlayIconColorForMood(mood: String): Color {
-    return when (mood) {
-        "Stressed" -> colorResource(R.color.stressed_play_icon)
-        "Sad" -> colorResource(R.color.sad_play_icon)
-        "Neutral" -> colorResource(R.color.neutral_pay_icon)
-        "Peaceful" -> colorResource(R.color.peaceful_play_icon)
-        "Excited" -> colorResource(R.color.exited_play_icon)
-        else -> Color.Transparent // Default color if mood is not recognized
-    }
-}
 
 @Preview
 @Composable

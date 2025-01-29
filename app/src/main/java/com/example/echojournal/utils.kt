@@ -2,10 +2,12 @@ package com.example.echojournal
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
+import java.util.Date
 import java.util.Locale
 
 fun formatDuration(durationMillis: Long): String {
@@ -35,4 +37,14 @@ fun getRelativeDay(timestamp: Long): String {
                 timestampDate.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy"))
         }
     }
+}
+
+
+fun getDate(timestamp: Long): String {
+    val formattedDate =
+        SimpleDateFormat(
+            "hh:mm a",
+            Locale.getDefault()
+        ).format(Date(timestamp))
+    return formattedDate
 }

@@ -11,6 +11,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -81,6 +82,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(modifier: Modifier, navController: NavController) {
@@ -384,7 +386,7 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                 )
 
                 if (!isRecordingVisible) {
-                    val rippleColor1 = colorResource(R.color.ripple_first)
+                    val rippleColor1 = colorResource(R.color.sad_bg)
                     val rippleColor2 = colorResource(R.color.ripple_second)
                     val rippleRadius1 = remember { Animatable(0f) }
                     val rippleRadius2 = remember { Animatable(0f) }

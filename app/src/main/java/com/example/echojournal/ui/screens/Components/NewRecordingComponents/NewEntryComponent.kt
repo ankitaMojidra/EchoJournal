@@ -2,11 +2,11 @@ package com.example.echojournal.ui.screens.Components.NewRecordingComponents
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,12 +16,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
@@ -39,9 +38,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -52,6 +54,8 @@ import com.example.echojournal.database.AudioRecord
 import com.example.echojournal.database.AudioRecordDao
 import com.example.echojournal.database.AudioRecordDatabase
 import com.example.echojournal.formatDuration
+import com.example.echojournal.ui.screens.Components.getBackgroundColorForMood
+import com.example.echojournal.ui.screens.Components.getPlayIconColorForMood
 import com.example.echojournal.ui.theme.EchoJournalTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -95,19 +99,29 @@ fun NewEntryComponent(
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Button(
+            IconButton(
                 onClick = {
                     showBottomSheet = true
                 },
-                shape = CircleShape,
                 modifier = Modifier.size(40.dp),
-                contentPadding = PaddingValues(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    contentColor = colorResource(R.color.add_icon_plus),
-                    containerColor = colorResource(R.color.cancel_backgroud)
-                )
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
+
+                ) {
+                if (selectedMood != null) {
+                    val moodIcon = getMoodIcon(selectedMood!!)
+                    Image(
+                        painter = painterResource(id = moodIcon),
+                        contentDescription = selectedMood,
+                        modifier = Modifier.size(40.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.add_mood),
+                        contentDescription = selectedMood,
+                        modifier = Modifier.size(40.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -136,47 +150,91 @@ fun NewEntryComponent(
                 )
             }
         }
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .background(
-                    colorResource(R.color.confirm_color),
-                    shape = RoundedCornerShape(50.dp)
-                )
-                .padding(8.dp),
 
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                onClick = {
-                },
-                shape = CircleShape,
-                modifier = Modifier.size(36.dp),
-                contentPadding = PaddingValues(10.dp)
+        if (selectedMood != null) {
+            val backgroundColor = getBackgroundColorForMood(selectedMood!!)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(shape = RoundedCornerShape(50))
+                    .background(color = backgroundColor)
+                    .padding(5.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Play",
-                    tint = Color.White
-                )
-            }
-            Spacer(modifier = Modifier.width(10.dp))
+                IconButton(
+                    onClick = { /*TODO*/ },
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .size(40.dp)
+                ) {
+                    if (selectedMood != null) {
+                        val playIconColor = getPlayIconColorForMood(selectedMood!!)
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Play",
+                            tint = playIconColor
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(10.dp))
 
-            Slider(
-                value = sliderPosition.floatValue,
-                onValueChange = { sliderPosition.floatValue = it },
-                modifier = Modifier.weight(1f),
-                colors = SliderDefaults.colors(
-                    thumbColor = MaterialTheme.colorScheme.primary,
-                    activeTrackColor = MaterialTheme.colorScheme.primary,
-                    inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                Slider(
+                    value = sliderPosition.floatValue,
+                    onValueChange = { sliderPosition.floatValue = it },
+                    modifier = Modifier.weight(1f),
+                    colors = SliderDefaults.colors(
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                        inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                    )
                 )
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            val formattedDuration = formatDuration(duration)
-            Log.d("Duration::::::::::", "Duration::::::$duration")
-            Log.d("Duration::::::::::", "FormattedDuration::::::$formattedDuration")
-            Text(text = "0:00/$formattedDuration")
+                Spacer(modifier = Modifier.width(10.dp))
+                val formattedDuration = formatDuration(duration)
+                Log.d("Duration::::::::::", "Duration::::::$duration")
+                Log.d("Duration::::::::::", "FormattedDuration::::::$formattedDuration")
+                Text(text = "0:00/$formattedDuration")
+            }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(shape = RoundedCornerShape(50))
+                    .background(color = colorResource(R.color.sad_bg))
+                    .padding(5.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = { /*TODO*/ },
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .size(40.dp)
+                ) {
+                    Icon(
+                        painter =  painterResource(id = R.drawable.audio_play),
+                        contentDescription = "Play",
+                        tint = colorResource(R.color.sad_play_icon)
+                    )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Slider(
+                    value = sliderPosition.floatValue,
+                    onValueChange = { sliderPosition.floatValue = it },
+                    modifier = Modifier.weight(1f),
+                    colors = SliderDefaults.colors(
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                        inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                    )
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                val formattedDuration = formatDuration(duration)
+                Log.d("Duration::::::::::", "Duration::::::$duration")
+                Log.d("Duration::::::::::", "FormattedDuration::::::$formattedDuration")
+                Text(text = "0:00/$formattedDuration")
+            }
         }
 
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -197,20 +255,22 @@ fun NewEntryComponent(
         }
 
         // Show HashtagSelector when showHashtagSelector is true
-        if (showHashtagSelector) {
-            HashtagSelector(
-                selectedTags = defaultTags,
-                allTopics = Constants.ALL_TOPICS,
-                onTagAdd = { tag ->
-                    if (!defaultTags.contains(tag)) {
-                        defaultTags = defaultTags + tag
-                    }
-                },
-                onTagRemove = { tag ->
-                    defaultTags = defaultTags - tag
+        HashtagSelector(
+            selectedTags = defaultTags,
+            allTopics = Constants.ALL_TOPICS,
+            onTagAdd = { tag ->
+                if (!defaultTags.contains(tag)) {
+                    defaultTags = defaultTags + tag
                 }
-            )
-        }
+                showHashtagSelector = false
+            },
+            onTagRemove = { tag ->
+                defaultTags = defaultTags - tag
+            },
+            onDismiss = { showHashtagSelector = false },  // Add this
+            expanded = showHashtagSelector,  // Pass the state directly
+            modifier = Modifier.align(Alignment.Start)
+        )
 
         ExpandableTextField(
             description = description,
@@ -253,6 +313,7 @@ fun NewEntryComponent(
         ) {
             Mood(modifier = Modifier) { mood ->
                 isMoodSelected = true
+                isMoodSelected = mood != null
                 selectedMood = mood
                 showBottomSheet = false
             }
@@ -291,6 +352,18 @@ fun saveAudioRecord(
         withContext(Dispatchers.Main) {
             onSaveComplete()
         }
+    }
+}
+
+
+fun getMoodIcon(selectedMood: String): Int {
+    return when (selectedMood) {
+        "Stressed" -> R.drawable.mood_stressed
+        "Sad" -> R.drawable.mood_sad
+        "Neutral" -> R.drawable.mood_neatral
+        "Peaceful" -> R.drawable.mood_peaceful
+        "Excited" -> R.drawable.mood_exited
+        else -> R.drawable.mood // Default icon
     }
 }
 

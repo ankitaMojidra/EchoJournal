@@ -36,7 +36,7 @@ fun BottomBar(
             onClick = onCancel,
             shape = RoundedCornerShape(20.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = colorResource(R.color.cancel_backgroud),
+                containerColor = colorResource(R.color.sad_bg),
                 contentColor = colorResource(R.color.cancel_color)
             ),
             modifier = Modifier

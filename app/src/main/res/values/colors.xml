@@ -11,11 +11,9 @@
     <color name="add_icon">#3179F8</color>
     <color name="cancel_color">#00419C</color>
     <color name="confirm_color">#578CFF</color>
-    <color name="cancel_backgroud">#EEF0FF</color>
     <color name="add_title_color">#C1C3CE</color>
     <color name="add_icon_plus">#9FABCD</color>
     <color name="save_color">#E1E2EC</color>
-    <color name="ripple_first">#EEF0FF</color>
     <color name="ripple_second">#D9E2FF</color>
     <color name="save_text">#6C7084</color>
     <color name="all_mood">#3B4663</color>

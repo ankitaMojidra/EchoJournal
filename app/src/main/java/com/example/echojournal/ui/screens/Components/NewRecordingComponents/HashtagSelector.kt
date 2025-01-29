@@ -2,6 +2,7 @@ package com.example.echojournal.ui.screens.Components.NewRecordingComponents
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -14,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -36,28 +38,19 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HashtagSelector(
     selectedTags: List<String>,
     allTopics: List<String>,
     onTagAdd: (String) -> Unit,
     onTagRemove: (String) -> Unit,
-    modifier: Modifier = Modifier
+    onDismiss: () -> Unit,  // Add this callback
+    modifier: Modifier = Modifier,
+    expanded: Boolean = false  // Change initiallyExpanded to expanded
 ) {
-    var searchText by remember { mutableStateOf("") }
-    var isExpanded by remember { mutableStateOf(false) }
-
-    val filteredTags = remember(searchText) {
-        allTopics.filter {
-            it.lowercase().contains(searchText.lowercase())
-        }
-    }
-
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp)
+        modifier = modifier.fillMaxWidth()
     ) {
         FlowRow(
             modifier = Modifier
@@ -72,45 +65,21 @@ fun HashtagSelector(
                 )
             }
         }
-
-        ExposedDropdownMenuBox(
-            expanded = isExpanded,
-            onExpandedChange = { isExpanded = it },
-            modifier = modifier
-                .fillMaxWidth()
+        Box(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            OutlinedTextField(
-                value = searchText,
-                onValueChange = {
-                    searchText = it
-                    isExpanded = true
-                },
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = onDismiss,  // Use the onDismiss callback
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(),
-                placeholder = { Text("Type to search tags") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded)
-                }
-            )
-
-            ExposedDropdownMenu(
-                expanded = isExpanded && (searchText.isNotEmpty() || filteredTags.isNotEmpty()),
-                onDismissRequest = { isExpanded = false },
-                modifier = Modifier
-                    .exposedDropdownSize()
+                    .fillMaxWidth(0.95f)
                     .background(
                         color = Color.White,
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(10.dp)
                     )
-                    .shadow(
-                        elevation = 4.dp,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .fillMaxWidth(),
+                    .clip(RoundedCornerShape(8.dp))
             ) {
-                // Show filtered existing tags
-                filteredTags.forEach { tag ->
+                allTopics.forEach { tag ->
                     DropdownMenuItem(
                         text = {
                             Row(
@@ -122,30 +91,7 @@ fun HashtagSelector(
                         },
                         onClick = {
                             onTagAdd(tag)
-                            searchText = ""
-                            isExpanded = false
-                        }
-                    )
-                }
-
-                // Show "Create" option if search text doesn't match any existing tags
-                if (searchText.isNotEmpty() && !filteredTags.any {
-                        it.equals(searchText, ignoreCase = true)
-                    }) {
-                    DropdownMenuItem(
-                        text = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("+ Create '")
-                                Text("#$searchText")
-                                Text("'")
-                            }
-                        },
-                        onClick = {
-                            onTagAdd(searchText)
-                            searchText = ""
-                            isExpanded = false
+                            onDismiss()  // Call onDismiss instead of directly setting expanded
                         }
                     )
                 }
