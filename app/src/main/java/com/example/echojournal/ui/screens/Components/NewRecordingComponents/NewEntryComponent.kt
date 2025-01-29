@@ -91,8 +91,8 @@ fun NewEntryComponent(
     }
 
     Column(
-        modifier = modifier.padding(start = 10.dp, end = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = modifier.padding(start = 10.dp, end = 10.dp).background(color = Color.White),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(
             Modifier.fillMaxWidth(),
@@ -239,10 +239,10 @@ fun NewEntryComponent(
 
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = "#", fontSize = 18.sp,
+                text = "#", fontSize = 20.sp,
                 color = colorResource(R.color.add_title_color)
             )
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(15.dp))
 
             Text(
                 context.getString(R.string.topic),

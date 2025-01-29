@@ -34,6 +34,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -55,19 +56,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.echojournal.R
 import com.example.echojournal.database.AudioRecord
 import com.example.echojournal.database.AudioRecordDao
 import com.example.echojournal.database.AudioRecordDatabase
+import com.example.echojournal.getRelativeDay
 import com.example.echojournal.ui.screens.NewRecordingActivity
 import com.example.echojournal.ui.theme.EchoJournalTheme
 import kotlinx.coroutines.Dispatchers
@@ -195,12 +200,13 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
     }
 
     Column {
-        if (allAudioRecords != null)
-        {
+        if (allAudioRecords != null) {
             Text(
                 text = context.getString(R.string.your_echo_general),
                 modifier.padding(top = 30.dp, start = 10.dp),
-                color = colorResource(R.color.your_echo_general)
+                color = colorResource(R.color.your_echo_general),
+                fontSize = 25.sp,
+                fontWeight = FontWeight.SemiBold
             )
             if (allAudioRecords!!.isNotEmpty()) {
                 Column {
@@ -208,7 +214,7 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                         var showMoodDropDown by remember { mutableStateOf(false) } //  Added
                         val selectedMoodText = selectedMoods.joinToString(", ")
                         val selectedTopicText = selectedTopicsWithDB.joinToString(", ")
-
+                        val moodItems = getMoodItems(context)  // Get mood items
                         var showTopicDropDown by remember { mutableStateOf(false) }
 
                         OutlinedButton(
@@ -227,7 +233,61 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                             )
                         )
                         {
-                            Text(selectedMoodText.ifEmpty { context.getString(R.string.all_moods) })
+                            if (selectedMoodText.isEmpty()) {
+                                Text(context.getString(R.string.all_moods))
+                            } else {
+                                Row(
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Display all emojis first
+                                    Row(
+                                        horizontalArrangement = Arrangement.Start,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        selectedMoods.forEach { selectedMood ->
+                                            val moodItem =
+                                                moodItems.find { it.name == selectedMood }
+                                            moodItem?.let { mood ->
+                                                mood.icon?.let { icon ->
+                                                    Image(
+                                                        bitmap = icon.toBitmap().asImageBitmap(),
+                                                        contentDescription = mood.name,
+                                                        modifier = Modifier
+                                                            .size(20.dp)
+                                                            .padding(end = 4.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.width(4.dp))
+
+                                    // Display all texts after emojis
+                                    Row(
+                                        horizontalArrangement = Arrangement.Start,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        selectedMoods.forEachIndexed { index, selectedMood ->
+                                            Text(
+                                                text = selectedMood + if (index < selectedMoods.size - 1) ", " else ""
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+
+                                    // Display for close icon
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Reset Filter",
+                                        modifier = Modifier
+                                            .size(18.dp)
+                                            .clickable { selectedMoods = emptySet() }
+                                    )
+                                }
+                            }
                         }
 
                         Spacer(modifier = Modifier.width(8.dp))
@@ -263,7 +323,59 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                                 containerColor = if (selectedTopicText.isEmpty()) colorResource(R.color.default_color) else Color.White
                             )
                         ) {
-                            Text(selectedTopicText.ifEmpty { context.getString(R.string.all_topics) })
+                            if (selectedTopicText.isEmpty()) {
+                                Text(context.getString(R.string.all_topics))
+                            } else {
+                                Row(
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                )
+                                {
+                                    if (selectedTopicsWithDB.size > 2) {
+                                        Text(text = "+1")
+                                    }
+                                    else {
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            if (selectedTopicsWithDB.size <= 2) {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.Start,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                )
+                                                {
+                                                    selectedTopicsWithDB.forEachIndexed { index, selectedTopic ->
+                                                        Text(
+                                                            text = selectedTopic + if (index < selectedTopicsWithDB.size - 1) ", " else ""
+                                                        )
+                                                    }
+                                                }
+                                            } else {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.Start,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    selectedTopicsWithDB.take(2)
+                                                        .forEachIndexed { index, selectedTopic ->
+                                                            Text(
+                                                                text = selectedTopic + if (index < 1) ", " else ""
+                                                            )
+                                                        }
+                                                    Text(text = "+${selectedTopicsWithDB.size - 2}")
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Reset Filter",
+                                        modifier = Modifier
+                                            .size(18.dp)
+                                            .clickable { selectedTopicsWithDB = emptySet() }
+                                    )
+                                }
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(20.dp))
@@ -289,8 +401,6 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                                 selectedTopics = selectedTopicsWithDB,
                                 updateSelectedTopics = { newSelectedTopics ->
                                     selectedTopicsWithDB = newSelectedTopics
-                                    // selectedTopicText = newSelectedTopics.joinToString { ", " }
-
                                 },
                                 topics = allTopics
                             )
@@ -299,8 +409,22 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                     LazyColumn {
                         Log.d("HomeScreen", "Display Lazy column")
 
-                        items(filteredAudioRecords, key = { record -> record.id }) { record ->
-                            RecordHistoryItem(record = record, onPlay = { })
+                        items(
+                            items = filteredAudioRecords,
+                            key = { record -> record.id }
+                        ) { record ->
+                            val index = filteredAudioRecords.indexOf(record)
+                            val previousRecord = if (index > 0) filteredAudioRecords[index - 1] else null
+                            val showSeparatorLine = previousRecord?.let {
+                                getRelativeDay(it.timestamp) == getRelativeDay(record.timestamp)
+                            } ?: false
+
+                            RecordHistoryItem(
+                                record = record,
+                                previousDayTimestamp = previousRecord?.timestamp,
+                                showSeparatorLine = showSeparatorLine,
+                                onPlay = { }
+                            )
                         }
                     }
                 }
@@ -352,11 +476,18 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                if (!isRecordingVisible) {
                 Text(
                     text = context.getString(R.string.recording_your_memories),
-                    textAlign = TextAlign.Center
-                )
-                Text(text = recordingTime, textAlign = TextAlign.Center)
+                    textAlign = TextAlign.Center, fontSize = 20.sp, fontWeight = FontWeight.SemiBold
+                )}else
+                {
+                    Text(
+                        text = context.getString(R.string.recording_paused, ),
+                        textAlign = TextAlign.Center, fontSize = 20.sp, fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Text(text = recordingTime, textAlign = TextAlign.Center, fontSize = 12.sp)
             }
 
             Row(
@@ -503,32 +634,6 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
         }
     }
 }
-
-private fun filterAudioRecordsByMood(
-    records: List<AudioRecord>,
-    selectedMoods: Set<String>
-): List<AudioRecord> {
-    Log.d("HomeScreen", "filterAudioRecordsByMood: selectedMoods = $selectedMoods")
-
-    if (selectedMoods.isEmpty()) {
-        Log.d("HomeScreen", "filterAudioRecordsByMood: no moods selected, returning all records")
-        return records // Return all records if no moods are selected
-    }
-
-    val filteredList = records.filter { record ->
-        val recordMood = record.mood
-        val isMatch = selectedMoods.any { it == recordMood } // Check using `==`
-        Log.d(
-            "HomeScreen",
-            "filterAudioRecordsByMood: record mood = $recordMood, match = $isMatch, selected mood ${selectedMoods}"
-        )
-        isMatch
-    }
-
-    Log.d("HomeScreen", "filterAudioRecordsByMood: filtered list size = ${filteredList.size}")
-    return filteredList
-}
-
 private fun filterAudioRecordsByMoodAndTopic(
     records: List<AudioRecord>,
     selectedMoods: Set<String>,
@@ -566,11 +671,9 @@ private fun filterAudioRecordsByMoodAndTopic(
     )
     return filteredList
 }
-
 private fun pauseRecording(mediaRecorder: MediaRecorder?) {
     mediaRecorder?.pause()
 }
-
 private fun resumeRecording(
     context: Context,
     outputFile: File,
@@ -584,7 +687,6 @@ private fun resumeRecording(
         onRecorderCreated(startRecording(context, outputFile) { })
     }
 }
-
 private fun stopRecordingAndSave(
     context: Context,
     mediaRecorder: MediaRecorder?,
@@ -638,7 +740,6 @@ private fun getAudioDuration(filePath: String): Long {
         retriever.release()
     }
 }
-
 private fun startRecording(
     context: Context,
     outputFile: File,
@@ -678,6 +779,6 @@ private fun startRecording(
 @Composable
 fun HomeScreenPreview() {
     EchoJournalTheme {
-        HomeScreen(modifier = Modifier, navController = rememberNavController())
+        // HomeScreen(modifier = Modifier, navController = rememberNavController())
     }
 }

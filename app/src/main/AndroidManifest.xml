@@ -23,6 +23,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.screens.NewRecordingActivity" />
+        <activity
+            android:name=".ui.screens.NewRecordingActivity"
+            android:theme="@style/Theme.EchoJournal.NoActionBar"/>
     </application>
 </manifest>

@@ -2,7 +2,6 @@ package com.example.echojournal.ui.screens.Components.HomeScreenComponents
 
 import android.media.MediaPlayer
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
@@ -13,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,8 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -39,17 +37,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.echojournal.R
 import com.example.echojournal.database.AudioRecord
+import com.example.echojournal.formatDuration
 import com.example.echojournal.getDate
 import com.example.echojournal.getRelativeDay
 import com.example.echojournal.ui.screens.Components.getBackgroundColorForMood
@@ -58,13 +57,15 @@ import com.example.echojournal.ui.theme.EchoJournalTheme
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
+fun RecordHistoryItem(
+    record: AudioRecord,
+    previousDayTimestamp: Long?,
+    showSeparatorLine: Boolean,
+    onPlay: () -> Unit
+) {
     val context = LocalContext.current
     var isPlaying by remember { mutableStateOf(false) }
     val mediaPlayer = remember { MediaPlayer() }
@@ -92,43 +93,75 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
     }
 
     Column(modifier = Modifier.padding(start = 10.dp, end = 10.dp)) {
-
-        val day = getRelativeDay(record.timestamp)
-        Text(text = day)
-
+        // Only show the day text if it's different from the previous item
+        if (previousDayTimestamp == null ||
+            getRelativeDay(previousDayTimestamp) != getRelativeDay(record.timestamp)
+        ) {
+            Text(
+                text = getRelativeDay(record.timestamp),
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp),
         ) {
-            when (record.mood) {
-                "Stressed" -> Image(
-                    painter = painterResource(R.drawable.mood_stressed),
-                    contentDescription = "mood"
-                )
+            Box(
+                modifier = Modifier.width(40.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxHeight()
+                ) {
+                    // Mood emoji
+                    when (record.mood) {
+                        "Stressed" -> Image(
+                            painter = painterResource(R.drawable.mood_stressed),
+                            contentDescription = "mood",
+                            modifier = Modifier.size(40.dp)
+                        )
 
-                " Sad" -> Image(
-                    painter = painterResource(R.drawable.mood_sad),
-                    contentDescription = "mood"
-                )
+                        " Sad" -> Image(
+                            painter = painterResource(R.drawable.mood_sad),
+                            contentDescription = "mood",
+                            modifier = Modifier.size(40.dp)
+                        )
 
-                "Neutral" -> Image(
-                    painter = painterResource(R.drawable.mood_neatral),
-                    contentDescription = "mood"
-                )
+                        "Neutral" -> Image(
+                            painter = painterResource(R.drawable.mood_neatral),
+                            contentDescription = "mood",
+                            modifier = Modifier.size(40.dp)
+                        )
 
-                "Peaceful" -> Image(
-                    painter = painterResource(R.drawable.mood_peaceful),
-                    contentDescription = "mood"
-                )
+                        "Peaceful" -> Image(
+                            painter = painterResource(R.drawable.mood_peaceful),
+                            contentDescription = "mood",
+                            modifier = Modifier.size(40.dp)
+                        )
 
-                "Excited" -> Image(
-                    painter = painterResource(R.drawable.mood_exited),
-                    contentDescription = "mood"
-                )
+                        "Excited" -> Image(
+                            painter = painterResource(R.drawable.mood_exited),
+                            contentDescription = "mood",
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+
+                    // Separator line
+                    if (showSeparatorLine) {
+                        Spacer(
+                            modifier = Modifier
+                                .width(2.dp)
+                                .height(180.dp)
+                                .background(Color(0xFFE0E0E0))
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.width(10.dp))
+
             Card(colors = CardDefaults.cardColors(containerColor = colorResource(R.color.white))) {
                 Column(
                     Modifier
@@ -139,7 +172,11 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(text = record.title)
+                        Text(
+                            text = record.title,
+                            color = colorResource(R.color.your_echo_general),
+                            fontWeight = FontWeight.SemiBold
+                        )
                         val timestamp1 = record.timestamp
                         val formattedDate = getDate(timestamp1)
                         Text(text = formattedDate)
@@ -156,7 +193,6 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                             .padding(5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Play Button
                         IconButton(
                             onClick = {
                                 if (!isPlaying) {
@@ -174,13 +210,13 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                         ) {
                             Icon(
                                 painter = rememberVectorPainter(
-                                    if(isPlaying) {
+                                    if (isPlaying) {
                                         ImageVector.vectorResource(id = R.drawable.icon_pause)
                                     } else {
                                         ImageVector.vectorResource(id = R.drawable.audio_play)
                                     }
                                 ),
-                                contentDescription = if(isPlaying) "Pause" else "Play",
+                                contentDescription = if (isPlaying) "Pause" else "Play",
                                 tint = playIconColor,
                                 modifier = Modifier.size(45.dp)
                             )
@@ -188,7 +224,6 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
 
                         Spacer(modifier = Modifier.width(8.dp))
 
-                        // Progress Bar
                         Box(
                             modifier = Modifier.weight(1f),
                             contentAlignment = Alignment.CenterStart
@@ -198,24 +233,21 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
                                     .fillMaxWidth()
                                     .height(8.dp)
                             ) {
-                                // Background track
                                 drawRoundRect(
-                                    color = Color(0xFFE6C9EA), // Light gray/purple color for the track
+                                    color = Color(0xFFE6C9EA),
                                     cornerRadius = CornerRadius(4.dp.toPx())
                                 )
-                                // Progress indicator
                                 drawRoundRect(
-                                    color = Color(0xFFD6AEDD), // More saturated purple for the progress
+                                    color = Color(0xFFD6AEDD),
                                     cornerRadius = CornerRadius(4.dp.toPx()),
-                                    size = size.copy(width = size.width * 0.3f) // Example progress, make it dynamic
+                                    size = size.copy(width = size.width * 0.3f)
                                 )
                             }
                         }
+
                         Spacer(modifier = Modifier.width(8.dp))
-                        val formattedDuration =
-                            com.example.echojournal.formatDuration(record.duration)
-                        Log.d("Duration::::::::::", "Duration::::::${record.duration}")
-                        Log.d("Duration::::::::::", "FormattedDuration::::::$formattedDuration")
+
+                        val formattedDuration = formatDuration(record.duration)
                         Text(
                             text = "0:00/$formattedDuration",
                             style = MaterialTheme.typography.bodyMedium,
@@ -236,8 +268,6 @@ fun RecordHistoryItem(record: AudioRecord, onPlay: () -> Unit) {
         }
     }
 }
-
-
 
 @Preview
 @Composable

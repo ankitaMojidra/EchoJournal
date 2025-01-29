@@ -22,7 +22,6 @@ fun formatDuration(durationMillis: Long): String {
 fun getRelativeDay(timestamp: Long): String {
     val instant = Instant.ofEpochMilli(timestamp)
     val timestampDate = instant.atZone(ZoneId.systemDefault()).toLocalDate()
-
     val today = LocalDate.now()
     val yesterday = today.minusDays(1)
 
