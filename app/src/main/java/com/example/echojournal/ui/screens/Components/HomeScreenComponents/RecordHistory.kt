@@ -4,15 +4,16 @@ import android.media.MediaPlayer
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,29 +21,36 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -54,10 +62,12 @@ import com.example.echojournal.getRelativeDay
 import com.example.echojournal.ui.screens.Components.getBackgroundColorForMood
 import com.example.echojournal.ui.screens.Components.getPlayIconColorForMood
 import com.example.echojournal.ui.theme.EchoJournalTheme
+import kotlinx.coroutines.delay
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun RecordHistoryItem(
@@ -69,6 +79,25 @@ fun RecordHistoryItem(
     val context = LocalContext.current
     var isPlaying by remember { mutableStateOf(false) }
     val mediaPlayer = remember { MediaPlayer() }
+    var currentPosition by remember { mutableStateOf(0) }
+    val sliderPosition = remember { mutableFloatStateOf(0f) }
+
+    // Function to update the current playback time
+    fun updatePlaybackTime() {
+        if (mediaPlayer.isPlaying) {
+            currentPosition = mediaPlayer.currentPosition
+            val progress = currentPosition.toFloat() / record.duration.toFloat()
+            sliderPosition.floatValue = progress.coerceIn(0f, 1f)
+        }
+    }
+
+    // Observe playback progress using LaunchedEffect
+    LaunchedEffect(isPlaying) {
+        while (isPlaying) {
+            updatePlaybackTime()
+            delay(200) // Update every 200ms
+        }
+    }
 
     fun playAudio(audioData: ByteArray) {
         try {
@@ -85,6 +114,8 @@ fun RecordHistoryItem(
             isPlaying = true
             mediaPlayer.setOnCompletionListener {
                 isPlaying = false
+                currentPosition = 0
+                sliderPosition.floatValue = 0f
             }
         } catch (e: IOException) {
             e.printStackTrace()
@@ -123,7 +154,7 @@ fun RecordHistoryItem(
                             modifier = Modifier.size(40.dp)
                         )
 
-                        " Sad" -> Image(
+                        "Sad" -> Image(
                             painter = painterResource(R.drawable.mood_sad),
                             contentDescription = "mood",
                             modifier = Modifier.size(40.dp)
@@ -204,57 +235,58 @@ fun RecordHistoryItem(
                                 }
                             },
                             modifier = Modifier
-                                .clip(CircleShape)
-                                .background(Color.White)
                                 .size(40.dp)
+                                .shadow(elevation = 8.dp, shape = RoundedCornerShape(50.dp))
+                                .clip(RoundedCornerShape(50.dp))
+                                .background(Color.White)
                         ) {
-                            Icon(
-                                painter = rememberVectorPainter(
-                                    if (isPlaying) {
-                                        ImageVector.vectorResource(id = R.drawable.icon_pause)
-                                    } else {
-                                        ImageVector.vectorResource(id = R.drawable.audio_play)
-                                    }
-                                ),
-                                contentDescription = if (isPlaying) "Pause" else "Play",
-                                tint = playIconColor,
-                                modifier = Modifier.size(45.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        Box(
-                            modifier = Modifier.weight(1f),
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            Canvas(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(8.dp)
-                            ) {
-                                drawRoundRect(
-                                    color = Color(0xFFE6C9EA),
-                                    cornerRadius = CornerRadius(4.dp.toPx())
+                            if (isPlaying) {
+                                Icon(
+                                    imageVector = Icons.Filled.Pause,
+                                    contentDescription = "Play",
+                                    tint = playIconColor
                                 )
-                                drawRoundRect(
-                                    color = Color(0xFFD6AEDD),
-                                    cornerRadius = CornerRadius(4.dp.toPx()),
-                                    size = size.copy(width = size.width * 0.3f)
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = "Play",
+                                    tint = playIconColor
                                 )
                             }
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Slider(
+                            value = sliderPosition.floatValue,
+                            onValueChange = { sliderPosition.floatValue = it },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(8.dp), // Adjust height here
+                            colors = SliderDefaults.colors(
+                                thumbColor = Color.Transparent,
+                                activeTrackColor = getPlayIconColorForMood(record.mood),
+                                inactiveTrackColor =  getPlayIconColorForMood(record.mood).copy(alpha = 0.2f)
+                            ),
+                            thumb = {
+                                SliderDefaults.Thumb(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    colors = SliderDefaults.colors(thumbColor = Color.Transparent),
+                                    modifier = Modifier.size(0.dp)
+                                )
+                            },
+                        )
 
                         Spacer(modifier = Modifier.width(8.dp))
 
                         val formattedDuration = formatDuration(record.duration)
                         Text(
-                            text = "0:00/$formattedDuration",
+                            text = "${formatDuration(currentPosition.toLong())}/$formattedDuration",
                             style = MaterialTheme.typography.bodyMedium,
                             color = colorResource(R.color.audio_time),
                             modifier = Modifier.padding(end = 8.dp)
                         )
                     }
+
                     Text(text = record.description)
                     TopicTags(record.selectedTopic)
                 }
@@ -267,6 +299,11 @@ fun RecordHistoryItem(
             mediaPlayer.release()
         }
     }
+}
+
+@Composable
+fun getInitialInactiveTrackColor(): Color {
+    return Color.LightGray
 }
 
 @Preview

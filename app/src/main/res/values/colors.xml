@@ -19,18 +19,29 @@
     <color name="all_mood">#3B4663</color>
     <color name="audio_time">#40434F</color>
     <color name="topic_tag_bg">#F2F2F7</color>
+
+    <color name="peaceful_container">#E1CEDB</color>
+    <color name="exited_container">#DDD2C8</color>
+    <color name="neutral_container">#B9DDCB</color>
+    <color name="sad_container">#C5D8E9</color>
+    <color name="stressed_container">#E9C5C5</color>
+
+
     <color name="neatral_bg">#EEF7F3</color>
     <color name="peaceful_bg">#F6F2F5</color>
     <color name="sad_bg">#EEF0FF</color>
     <color name="exited_bg">#F5F2EF</color>
-    <color name="stressed_bg">#F5F2EF</color>
+    <color name="stressed_bg">#F8EFEF</color>
+
     <color name="sad_play_icon">#3A8EDE</color>
     <color name="peaceful_play_icon">#BE3294</color>
     <color name="neutral_pay_icon">#41B278</color>
     <color name="stressed_play_icon">#DB6C0B</color>
-    <color name="exited_play_icon">#F05B5C</color>
+    <color name="exited_play_icon">#F6B72F</color>
+
     <color name="default_color">#00000000</color>
     <color name="selected_row">#F6F7FA</color>
     <color name="your_echo_general">#191A20</color>
     <color name="selected_border_color">#2071F5</color>
+    <color name="progress_default">#BAC6E9</color>
 </resources>

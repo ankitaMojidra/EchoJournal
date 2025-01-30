@@ -585,7 +585,7 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                     )
 
                     Image(
-                        painter = painterResource(R.drawable.icon_pause),
+                        painter = painterResource(R.drawable.icon_pause_blue),
                         contentDescription = null,
                         modifier = Modifier
                             .size(50.dp)

@@ -74,7 +74,8 @@ class NewRecordingActivity : ComponentActivity() {
                         timestamp = timestamp,
                         duration = duration,
                         onSaveComplete = { finish() },
-                        onCancel = { finish() }
+                        onCancel = { finish() },
+                        onPlay = {}
                     )
                 }
             }

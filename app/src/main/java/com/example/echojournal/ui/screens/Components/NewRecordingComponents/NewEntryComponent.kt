@@ -1,23 +1,26 @@
 package com.example.echojournal.ui.screens.Components.NewRecordingComponents
 
 import android.annotation.SuppressLint
-import android.util.Log
+import android.media.MediaPlayer
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,9 +33,11 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,8 +64,12 @@ import com.example.echojournal.ui.screens.Components.getPlayIconColorForMood
 import com.example.echojournal.ui.theme.EchoJournalTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 
 @SuppressLint("UnrememberedMutableInteractionSource")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,7 +80,8 @@ fun NewEntryComponent(
     timestamp: Long,
     duration: Long,
     onSaveComplete: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    onPlay: () -> Unit
 ) {
     val context = LocalContext.current
     val sliderPosition = remember { mutableFloatStateOf(0f) }
@@ -86,12 +96,59 @@ fun NewEntryComponent(
     var defaultTags by remember { mutableStateOf(listOf<String>()) }
     var isMoodSelected by remember { mutableStateOf(false) }
     var selectedMood by remember { mutableStateOf<String?>(null) } // To store selected Mood
+    var currentPosition by remember { mutableIntStateOf(0) }
+    val mediaPlayer = remember { MediaPlayer() }
+    var isPlaying by remember { mutableStateOf(false) }
+
     val isSaveEnabled by remember {
         derivedStateOf { defaultTags.isNotEmpty() && isMoodSelected }
     }
 
+    // Function to update the current playback time
+    fun updatePlaybackTime() {
+        if (mediaPlayer.isPlaying) {
+            currentPosition = mediaPlayer.currentPosition
+            val progress = currentPosition.toFloat() / duration.toFloat()
+            sliderPosition.floatValue = progress.coerceIn(0f, 1f)
+        }
+    }
+
+    // Observe playback progress using LaunchedEffect
+    LaunchedEffect(isPlaying) {
+        while (isPlaying) {
+            updatePlaybackTime()
+            delay(200) // Update every 200ms
+        }
+    }
+
+    fun playAudio(audioData: ByteArray) {
+        try {
+            val tempFile = File.createTempFile("audio", ".mp3", context.cacheDir)
+            tempFile.deleteOnExit()
+            val fos = FileOutputStream(tempFile)
+            fos.write(audioData)
+            fos.close()
+
+            mediaPlayer.reset()
+            mediaPlayer.setDataSource(tempFile.absolutePath)
+            mediaPlayer.prepare()
+            mediaPlayer.start()
+            isPlaying = true
+            mediaPlayer.setOnCompletionListener {
+                isPlaying = false
+                currentPosition = 0
+                sliderPosition.floatValue = 0f
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Toast.makeText(context, "Error playing audio", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     Column(
-        modifier = modifier.padding(start = 10.dp, end = 10.dp).background(color = Color.White),
+        modifier = modifier
+            .padding(start = 10.dp, end = 10.dp)
+            .background(color = Color.White),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(
@@ -153,6 +210,8 @@ fun NewEntryComponent(
 
         if (selectedMood != null) {
             val backgroundColor = getBackgroundColorForMood(selectedMood!!)
+            val playIconColor = getPlayIconColorForMood(selectedMood!!)
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -162,14 +221,26 @@ fun NewEntryComponent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
-                    onClick = { /*TODO*/ },
+                    onClick = {
+                        if (!isPlaying) {
+                            playAudio(audioData)
+                        } else {
+                            mediaPlayer.stop()
+                            isPlaying = false
+                        }
+                    },
                     modifier = Modifier
                         .clip(CircleShape)
                         .background(Color.White)
                         .size(40.dp)
                 ) {
-                    if (selectedMood != null) {
-                        val playIconColor = getPlayIconColorForMood(selectedMood!!)
+                    if (isPlaying) {
+                        Icon(
+                            imageVector = Icons.Filled.Pause,
+                            contentDescription = "Play",
+                            tint = playIconColor
+                        )
+                    } else {
                         Icon(
                             imageVector = Icons.Default.PlayArrow,
                             contentDescription = "Play",
@@ -177,23 +248,36 @@ fun NewEntryComponent(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Slider(
                     value = sliderPosition.floatValue,
                     onValueChange = { sliderPosition.floatValue = it },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(30.dp), // Adjust height here
                     colors = SliderDefaults.colors(
-                        thumbColor = MaterialTheme.colorScheme.primary,
-                        activeTrackColor = MaterialTheme.colorScheme.primary,
-                        inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
-                    )
+                        thumbColor = Color.Transparent,
+                        activeTrackColor = getPlayIconColorForMood(selectedMood!!),
+                        inactiveTrackColor = getPlayIconColorForMood(selectedMood!!).copy(alpha = 0.2f)
+                    ),
+                    thumb = {
+                        SliderDefaults.Thumb(
+                            interactionSource = remember { MutableInteractionSource() },
+                            colors = SliderDefaults.colors(thumbColor = Color.Transparent),
+                            modifier = Modifier.size(0.dp)
+                        )
+                    },
                 )
+
                 Spacer(modifier = Modifier.width(10.dp))
                 val formattedDuration = formatDuration(duration)
-                Log.d("Duration::::::::::", "Duration::::::$duration")
-                Log.d("Duration::::::::::", "FormattedDuration::::::$formattedDuration")
-                Text(text = "0:00/$formattedDuration")
+                Text(
+                    text = "${formatDuration(currentPosition.toLong())}/$formattedDuration",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorResource(R.color.audio_time),
+                    modifier = Modifier.padding(end = 8.dp)
+                )
             }
         } else {
             Row(
@@ -205,44 +289,89 @@ fun NewEntryComponent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
-                    onClick = { /*TODO*/ },
+                    onClick = {
+                        if (!isPlaying) {
+                            playAudio(audioData)
+                            onPlay()
+                        } else {
+                            mediaPlayer.stop()
+                            isPlaying = false
+                        }
+                    },
                     modifier = Modifier
                         .clip(CircleShape)
                         .background(Color.White)
                         .size(40.dp)
                 ) {
-                    Icon(
-                        painter =  painterResource(id = R.drawable.audio_play),
-                        contentDescription = "Play",
-                        tint = colorResource(R.color.sad_play_icon)
-                    )
+                    if (isPlaying) {
+                        Icon(
+                            imageVector = Icons.Filled.Pause,
+                            contentDescription = "Play",
+                            tint = colorResource(R.color.sad_play_icon)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Play",
+                            tint = colorResource(R.color.sad_play_icon)
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.width(10.dp))
 
                 Slider(
                     value = sliderPosition.floatValue,
                     onValueChange = { sliderPosition.floatValue = it },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(18.dp), // Adjust height here
                     colors = SliderDefaults.colors(
-                        thumbColor = MaterialTheme.colorScheme.primary,
+                        thumbColor = Color.Transparent,
                         activeTrackColor = MaterialTheme.colorScheme.primary,
                         inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
-                    )
+                    ),
+                    thumb = {
+                        SliderDefaults.Thumb(
+                            interactionSource = remember { MutableInteractionSource() },
+                            colors = SliderDefaults.colors(thumbColor = Color.Transparent),
+                            modifier = Modifier.size(0.dp)
+                        )
+                    },
+                    track = {
+                        SliderDefaults.Track(
+                            sliderState = it,
+                            modifier = Modifier
+                                .height(25.dp),
+                            colors = SliderDefaults.colors(
+                                activeTrackColor = colorResource(R.color.sad_play_icon),
+                                inactiveTrackColor = colorResource(R.color.sad_play_icon).copy(alpha = 0.2f)
+                            )
+                        )
+                    },
                 )
+
                 Spacer(modifier = Modifier.width(10.dp))
                 val formattedDuration = formatDuration(duration)
-                Log.d("Duration::::::::::", "Duration::::::$duration")
-                Log.d("Duration::::::::::", "FormattedDuration::::::$formattedDuration")
-                Text(text = "0:00/$formattedDuration")
+                Text(
+                    text = "${formatDuration(currentPosition.toLong())}/$formattedDuration",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorResource(R.color.audio_time),
+                    modifier = Modifier.padding(end = 8.dp)
+                )
             }
         }
 
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = "#", fontSize = 20.sp,
                 color = colorResource(R.color.add_title_color)
             )
-            Spacer(Modifier.width(15.dp))
+            Spacer(Modifier.width(18.dp))
 
             Text(
                 context.getString(R.string.topic),

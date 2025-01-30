@@ -61,6 +61,7 @@ dependencies {
 
     //Splash Screen
     implementation(libs.androidx.core.splashscreen)
+    implementation (libs.androidx.material.icons.extended)
 
     //Hilt
     implementation(libs.hilt.android)
