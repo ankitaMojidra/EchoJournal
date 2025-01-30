@@ -1,4 +1,4 @@
-package com.example.echojournal.ui.screens.Components
+package com.example.echojournal.ui.screens.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color

@@ -1,4 +1,4 @@
-package com.example.echojournal.ui.screens.Components.NewRecordingComponents
+package com.example.echojournal.ui.screens.components.newrecordingcomponents
 
 import android.util.Log
 import androidx.compose.foundation.Image

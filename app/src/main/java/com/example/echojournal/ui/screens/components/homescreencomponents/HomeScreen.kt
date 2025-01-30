@@ -1,4 +1,4 @@
-package com.example.echojournal.ui.screens.Components.HomeScreenComponents
+package com.example.echojournal.ui.screens.components.homescreencomponents
 
 import android.Manifest
 import android.content.Context
@@ -29,7 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -333,8 +333,7 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                                 {
                                     if (selectedTopicsWithDB.size > 2) {
                                         Text(text = "+1")
-                                    }
-                                    else {
+                                    } else {
                                         Row(
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
@@ -409,20 +408,26 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                     LazyColumn {
                         Log.d("HomeScreen", "Display Lazy column")
 
-                        items(
+                        itemsIndexed(
                             items = filteredAudioRecords,
-                            key = { record -> record.id }
-                        ) { record ->
-                            val index = filteredAudioRecords.indexOf(record)
-                            val previousRecord = if (index > 0) filteredAudioRecords[index - 1] else null
-                            val showSeparatorLine = previousRecord?.let {
-                                getRelativeDay(it.timestamp) == getRelativeDay(record.timestamp)
+                            key = { _, record -> record.id }
+                        ) { index, record ->
+                            val nextRecord =
+                                if (index < filteredAudioRecords.size - 1) filteredAudioRecords[index + 1] else null
+                            val showSeparatorLine = nextRecord?.let {
+                                getRelativeDay(record.timestamp) == getRelativeDay(it.timestamp)
                             } ?: false
+                            val isFirstRecordOfDay = index == 0 ||
+                                    getRelativeDay(filteredAudioRecords[index - 1].timestamp) != getRelativeDay(
+                                record.timestamp
+                            )
 
                             RecordHistoryItem(
                                 record = record,
-                                previousDayTimestamp = previousRecord?.timestamp,
                                 showSeparatorLine = showSeparatorLine,
+                                isFirstRecordOfDay = isFirstRecordOfDay,
+                                filteredAudioRecords = filteredAudioRecords,
+                                index = index,
                                 onPlay = { }
                             )
                         }
@@ -477,14 +482,18 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (!isRecordingVisible) {
-                Text(
-                    text = context.getString(R.string.recording_your_memories),
-                    textAlign = TextAlign.Center, fontSize = 20.sp, fontWeight = FontWeight.SemiBold
-                )}else
-                {
                     Text(
-                        text = context.getString(R.string.recording_paused, ),
-                        textAlign = TextAlign.Center, fontSize = 20.sp, fontWeight = FontWeight.SemiBold
+                        text = context.getString(R.string.recording_your_memories),
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                } else {
+                    Text(
+                        text = context.getString(R.string.recording_paused),
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
                 Text(text = recordingTime, textAlign = TextAlign.Center, fontSize = 12.sp)
@@ -634,6 +643,7 @@ fun HomeScreen(modifier: Modifier, navController: NavController) {
         }
     }
 }
+
 private fun filterAudioRecordsByMoodAndTopic(
     records: List<AudioRecord>,
     selectedMoods: Set<String>,
@@ -671,9 +681,11 @@ private fun filterAudioRecordsByMoodAndTopic(
     )
     return filteredList
 }
+
 private fun pauseRecording(mediaRecorder: MediaRecorder?) {
     mediaRecorder?.pause()
 }
+
 private fun resumeRecording(
     context: Context,
     outputFile: File,
@@ -687,6 +699,7 @@ private fun resumeRecording(
         onRecorderCreated(startRecording(context, outputFile) { })
     }
 }
+
 private fun stopRecordingAndSave(
     context: Context,
     mediaRecorder: MediaRecorder?,
@@ -740,6 +753,7 @@ private fun getAudioDuration(filePath: String): Long {
         retriever.release()
     }
 }
+
 private fun startRecording(
     context: Context,
     outputFile: File,

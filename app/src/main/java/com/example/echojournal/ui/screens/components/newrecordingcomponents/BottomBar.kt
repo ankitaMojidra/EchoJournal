@@ -1,4 +1,4 @@
-package com.example.echojournal.ui.screens.Components.NewRecordingComponents
+package com.example.echojournal.ui.screens.components.newrecordingcomponents
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer

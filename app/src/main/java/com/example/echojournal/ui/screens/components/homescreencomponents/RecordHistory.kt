@@ -1,4 +1,4 @@
-package com.example.echojournal.ui.screens.Components.HomeScreenComponents
+package com.example.echojournal.ui.screens.components.homescreencomponents
 
 import android.media.MediaPlayer
 import android.os.Build
@@ -13,13 +13,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
@@ -38,6 +36,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -45,22 +44,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.echojournal.R
 import com.example.echojournal.database.AudioRecord
 import com.example.echojournal.formatDuration
 import com.example.echojournal.getDate
 import com.example.echojournal.getRelativeDay
-import com.example.echojournal.ui.screens.Components.getBackgroundColorForMood
-import com.example.echojournal.ui.screens.Components.getPlayIconColorForMood
+import com.example.echojournal.ui.screens.components.getBackgroundColorForMood
+import com.example.echojournal.ui.screens.components.getPlayIconColorForMood
 import com.example.echojournal.ui.theme.EchoJournalTheme
 import kotlinx.coroutines.delay
 import java.io.File
@@ -72,14 +70,16 @@ import java.io.IOException
 @Composable
 fun RecordHistoryItem(
     record: AudioRecord,
-    previousDayTimestamp: Long?,
     showSeparatorLine: Boolean,
+    isFirstRecordOfDay: Boolean,
+    filteredAudioRecords: List<AudioRecord>,
+    index: Int,
     onPlay: () -> Unit
 ) {
     val context = LocalContext.current
     var isPlaying by remember { mutableStateOf(false) }
     val mediaPlayer = remember { MediaPlayer() }
-    var currentPosition by remember { mutableStateOf(0) }
+    var currentPosition by remember { mutableIntStateOf(0) }
     val sliderPosition = remember { mutableFloatStateOf(0f) }
 
     // Function to update the current playback time
@@ -125,18 +125,18 @@ fun RecordHistoryItem(
 
     Column(modifier = Modifier.padding(start = 10.dp, end = 10.dp)) {
         // Only show the day text if it's different from the previous item
-        if (previousDayTimestamp == null ||
-            getRelativeDay(previousDayTimestamp) != getRelativeDay(record.timestamp)
+        if (index == 0 ||
+            getRelativeDay(filteredAudioRecords[index - 1].timestamp) != getRelativeDay(record.timestamp)
         ) {
             Text(
                 text = getRelativeDay(record.timestamp),
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = 8.dp),
+                fontSize = 13.sp
             )
         }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
         ) {
             Box(
                 modifier = Modifier.width(40.dp),
@@ -151,31 +151,31 @@ fun RecordHistoryItem(
                         "Stressed" -> Image(
                             painter = painterResource(R.drawable.mood_stressed),
                             contentDescription = "mood",
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(32.dp)
                         )
 
                         "Sad" -> Image(
                             painter = painterResource(R.drawable.mood_sad),
                             contentDescription = "mood",
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(32.dp)
                         )
 
                         "Neutral" -> Image(
                             painter = painterResource(R.drawable.mood_neatral),
                             contentDescription = "mood",
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(32.dp)
                         )
 
                         "Peaceful" -> Image(
                             painter = painterResource(R.drawable.mood_peaceful),
                             contentDescription = "mood",
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(32.dp)
                         )
 
                         "Excited" -> Image(
                             painter = painterResource(R.drawable.mood_exited),
                             contentDescription = "mood",
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(32.dp)
                         )
                     }
 
@@ -184,7 +184,7 @@ fun RecordHistoryItem(
                         Spacer(
                             modifier = Modifier
                                 .width(2.dp)
-                                .height(180.dp)
+                                .height(115.dp)
                                 .background(Color(0xFFE0E0E0))
                         )
                     }
@@ -196,7 +196,7 @@ fun RecordHistoryItem(
             Card(colors = CardDefaults.cardColors(containerColor = colorResource(R.color.white))) {
                 Column(
                     Modifier
-                        .padding(10.dp)
+                        .padding(start = 10.dp, end = 10.dp, bottom = 10.dp)
                         .fillMaxWidth()
                 ) {
                     Row(
@@ -210,7 +210,7 @@ fun RecordHistoryItem(
                         )
                         val timestamp1 = record.timestamp
                         val formattedDate = getDate(timestamp1)
-                        Text(text = formattedDate)
+                        Text(text = formattedDate, fontSize = 13.sp)
                     }
 
                     val playIconColor = getPlayIconColorForMood(record.mood)
@@ -235,7 +235,7 @@ fun RecordHistoryItem(
                                 }
                             },
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(34.dp)
                                 .shadow(elevation = 8.dp, shape = RoundedCornerShape(50.dp))
                                 .clip(RoundedCornerShape(50.dp))
                                 .background(Color.White)
@@ -265,7 +265,7 @@ fun RecordHistoryItem(
                             colors = SliderDefaults.colors(
                                 thumbColor = Color.Transparent,
                                 activeTrackColor = getPlayIconColorForMood(record.mood),
-                                inactiveTrackColor =  getPlayIconColorForMood(record.mood).copy(alpha = 0.2f)
+                                inactiveTrackColor = getPlayIconColorForMood(record.mood).copy(alpha = 0.2f)
                             ),
                             thumb = {
                                 SliderDefaults.Thumb(
@@ -286,8 +286,9 @@ fun RecordHistoryItem(
                             modifier = Modifier.padding(end = 8.dp)
                         )
                     }
-
-                    Text(text = record.description)
+                    Spacer(Modifier.height(2.dp))
+                    Text(text = record.description, fontSize = 13.sp)
+                    Spacer(Modifier.height(2.dp))
                     TopicTags(record.selectedTopic)
                 }
             }
@@ -301,10 +302,6 @@ fun RecordHistoryItem(
     }
 }
 
-@Composable
-fun getInitialInactiveTrackColor(): Color {
-    return Color.LightGray
-}
 
 @Preview
 @Composable

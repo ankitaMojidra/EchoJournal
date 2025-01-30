@@ -1,4 +1,4 @@
-package com.example.echojournal.ui.screens.Components.NewRecordingComponents
+package com.example.echojournal.ui.screens.components.newrecordingcomponents
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons

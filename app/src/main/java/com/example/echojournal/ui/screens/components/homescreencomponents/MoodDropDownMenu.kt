@@ -1,4 +1,4 @@
-package com.example.echojournal.ui.screens.Components.HomeScreenComponents
+package com.example.echojournal.ui.screens.components.homescreencomponents
 
 import android.util.Log
 import androidx.compose.foundation.Image
@@ -72,7 +72,7 @@ fun MoodDropDownMenu(
                     onDismiss()
                 },
                 modifier = Modifier
-                    .padding(start = 10.dp, end = 10.dp)
+                    .padding(start = 10.dp, end = 10.dp, top = 5.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .background(if (isItemSelected) colorResource(R.color.selected_row) else Color.White),
                 text = {

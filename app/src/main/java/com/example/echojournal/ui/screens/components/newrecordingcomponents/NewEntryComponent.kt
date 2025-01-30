@@ -1,5 +1,3 @@
-package com.example.echojournal.ui.screens.Components.NewRecordingComponents
-
 import android.annotation.SuppressLint
 import android.media.MediaPlayer
 import android.widget.Toast
@@ -8,7 +6,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,10 +19,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -59,8 +64,12 @@ import com.example.echojournal.database.AudioRecord
 import com.example.echojournal.database.AudioRecordDao
 import com.example.echojournal.database.AudioRecordDatabase
 import com.example.echojournal.formatDuration
-import com.example.echojournal.ui.screens.Components.getBackgroundColorForMood
-import com.example.echojournal.ui.screens.Components.getPlayIconColorForMood
+import com.example.echojournal.ui.screens.components.getBackgroundColorForMood
+import com.example.echojournal.ui.screens.components.getPlayIconColorForMood
+import com.example.echojournal.ui.screens.components.newrecordingcomponents.BottomBar
+import com.example.echojournal.ui.screens.components.newrecordingcomponents.ExpandableTextField
+import com.example.echojournal.ui.screens.components.newrecordingcomponents.Mood
+import com.example.echojournal.ui.screens.components.newrecordingcomponents.TagChip
 import com.example.echojournal.ui.theme.EchoJournalTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -72,7 +81,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 
 @SuppressLint("UnrememberedMutableInteractionSource")
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun NewEntryComponent(
     modifier: Modifier,
@@ -89,16 +98,19 @@ fun NewEntryComponent(
     val sheetState = rememberModalBottomSheetState()
     val database = remember { AudioRecordDatabase.getDatabase(context) }
     val audioRecordDao = remember { database.audioRecordDao() }
-    var audioRecord by remember { mutableStateOf<AudioRecord?>(null) }
+    val audioRecord by remember { mutableStateOf<AudioRecord?>(null) }
     var description by remember { mutableStateOf("") }
     var title by remember { mutableStateOf("") }
-    var showHashtagSelector by remember { mutableStateOf(false) }
     var defaultTags by remember { mutableStateOf(listOf<String>()) }
     var isMoodSelected by remember { mutableStateOf(false) }
-    var selectedMood by remember { mutableStateOf<String?>(null) } // To store selected Mood
+    var selectedMood by remember { mutableStateOf<String?>(null) }
     var currentPosition by remember { mutableIntStateOf(0) }
     val mediaPlayer = remember { MediaPlayer() }
     var isPlaying by remember { mutableStateOf(false) }
+
+    // New state for hashtag selector
+    var searchText by remember { mutableStateOf("") }
+    var isHashtagExpanded by remember { mutableStateOf(false) }
 
     val isSaveEnabled by remember {
         derivedStateOf { defaultTags.isNotEmpty() && isMoodSelected }
@@ -113,11 +125,10 @@ fun NewEntryComponent(
         }
     }
 
-    // Observe playback progress using LaunchedEffect
     LaunchedEffect(isPlaying) {
         while (isPlaying) {
             updatePlaybackTime()
-            delay(200) // Update every 200ms
+            delay(200)
         }
     }
 
@@ -151,22 +162,19 @@ fun NewEntryComponent(
             .background(color = Color.White),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        // Mood and Title section
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = {
-                    showBottomSheet = true
-                },
+                onClick = { showBottomSheet = true },
                 modifier = Modifier.size(40.dp),
-
-                ) {
+            ) {
                 if (selectedMood != null) {
-                    val moodIcon = getMoodIcon(selectedMood!!)
                     Image(
-                        painter = painterResource(id = moodIcon),
+                        painter = painterResource(id = getMoodIcon(selectedMood!!)),
                         contentDescription = selectedMood,
                         modifier = Modifier.size(40.dp),
                         contentScale = ContentScale.Fit
@@ -174,7 +182,7 @@ fun NewEntryComponent(
                 } else {
                     Image(
                         painter = painterResource(id = R.drawable.add_mood),
-                        contentDescription = selectedMood,
+                        contentDescription = null,
                         modifier = Modifier.size(40.dp),
                         contentScale = ContentScale.Fit
                     )
@@ -208,6 +216,7 @@ fun NewEntryComponent(
             }
         }
 
+        // Audio Player section
         if (selectedMood != null) {
             val backgroundColor = getBackgroundColorForMood(selectedMood!!)
             val playIconColor = getPlayIconColorForMood(selectedMood!!)
@@ -350,6 +359,7 @@ fun NewEntryComponent(
                     },
                 )
 
+
                 Spacer(modifier = Modifier.width(10.dp))
                 val formattedDuration = formatDuration(duration)
                 Text(
@@ -361,46 +371,143 @@ fun NewEntryComponent(
             }
         }
 
+
+        // Hashtag selector section
         Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "#", fontSize = 20.sp,
+                text = "#",
+                fontSize = 20.sp,
                 color = colorResource(R.color.add_title_color)
             )
             Spacer(Modifier.width(18.dp))
 
-            Text(
-                context.getString(R.string.topic),
-                color = colorResource(R.color.add_title_color),
-                style = TextStyle(fontSize = 18.sp),
-                modifier = Modifier.clickable {
-                    showHashtagSelector = true
+            Box(
+                modifier = Modifier
+                    .weight(1f) // This ensures the Box takes remaining width
+            ) {
+            ExposedDropdownMenuBox(
+                expanded = isHashtagExpanded,
+                onExpandedChange = { isHashtagExpanded = it }
+            ) {
+                BasicTextField(
+                    value = searchText,
+                    onValueChange = {
+                        searchText = it
+                        isHashtagExpanded = true
+                    },
+                    textStyle = TextStyle(
+                        fontSize = 18.sp,
+                        color = colorResource(R.color.add_title_color)
+                    ),
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth(),
+                    decorationBox = { innerTextField ->
+                        Box {
+                            if (searchText.isEmpty()) {
+                                Text(
+                                    context.getString(R.string.topic),
+                                    color = colorResource(R.color.add_title_color),
+                                    fontSize = 18.sp
+                                )
+                            }
+                            innerTextField()
+                        }
+                    }
+                )
+
+                // Dropdown menu for tags
+                val filteredTags = remember(searchText) {
+                    Constants.ALL_TOPICS.filter {
+                        it.lowercase().contains(searchText.lowercase())
+                    }
                 }
-            )
+
+                ExposedDropdownMenu(
+                    expanded = isHashtagExpanded && (searchText.isNotEmpty() || filteredTags.isNotEmpty()),
+                    onDismissRequest = {
+                        isHashtagExpanded = false
+                        searchText = ""
+                    },
+                    modifier = Modifier
+                        .exposedDropdownSize(matchTextFieldWidth = true)
+                        .background(
+                            color = Color.White,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .shadow(
+                            elevation = 4.dp,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                ) {
+                    filteredTags.forEach { tag ->
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("#")
+                                    Text(tag)
+                                }
+                            },
+                            onClick = {
+                                if (!defaultTags.contains(tag)) {
+                                    defaultTags = defaultTags + tag
+                                }
+                                searchText = ""
+                                isHashtagExpanded = false
+                            }
+                        )
+                    }
+
+                    if (searchText.isNotEmpty() && !filteredTags.any {
+                            it.equals(searchText, ignoreCase = true)
+                        }) {
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("+ Create '")
+                                    Text("#$searchText")
+                                    Text("'")
+                                }
+                            },
+                            onClick = {
+                                if (!defaultTags.contains(searchText)) {
+                                    defaultTags = defaultTags + searchText
+                                }
+                                searchText = ""
+                                isHashtagExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
         }
 
-        // Show HashtagSelector when showHashtagSelector is true
-        HashtagSelector(
-            selectedTags = defaultTags,
-            allTopics = Constants.ALL_TOPICS,
-            onTagAdd = { tag ->
-                if (!defaultTags.contains(tag)) {
-                    defaultTags = defaultTags + tag
-                }
-                showHashtagSelector = false
-            },
-            onTagRemove = { tag ->
-                defaultTags = defaultTags - tag
-            },
-            onDismiss = { showHashtagSelector = false },  // Add this
-            expanded = showHashtagSelector,  // Pass the state directly
-            modifier = Modifier.align(Alignment.Start)
-        )
+        // Selected tags display
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            defaultTags.forEach { tag ->
+                TagChip(
+                    text = tag,
+                    onRemove = {
+                        defaultTags = defaultTags - tag
+                    },
+                    modifier = Modifier.padding(end = 4.dp, bottom = 4.dp)
+                )
+            }
+        }
 
+        // Description field
         ExpandableTextField(
             description = description,
             onDescriptionChange = { description = it }
@@ -408,6 +515,7 @@ fun NewEntryComponent(
 
         Spacer(modifier.weight(1f))
 
+        // Bottom bar
         BottomBar(
             modifier = modifier,
             isConfirmVisible = true,
@@ -434,6 +542,7 @@ fun NewEntryComponent(
         )
     }
 
+    // Mood bottom sheet
     if (showBottomSheet) {
         ModalBottomSheet(
             onDismissRequest = { showBottomSheet = false },

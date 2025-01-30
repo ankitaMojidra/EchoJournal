@@ -1,4 +1,4 @@
-package com.example.echojournal.ui.screens.Components.HomeScreenComponents
+package com.example.echojournal.ui.screens.components.homescreencomponents
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -24,8 +24,8 @@ fun TopicTags(topicString: String) {
             ) {
                 Text(
                     text = "# ${topic.trim()}",
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                    fontSize = 14.sp
+                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 5.dp),
+                    fontSize = 13.sp
                 )
             }
         }

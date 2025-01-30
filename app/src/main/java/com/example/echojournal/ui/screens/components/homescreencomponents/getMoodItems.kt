@@ -1,4 +1,4 @@
-package com.example.echojournal.ui.screens.Components.HomeScreenComponents
+package com.example.echojournal.ui.screens.components.homescreencomponents
 
 import android.content.Context
 import androidx.compose.runtime.Composable
